@@ -22,6 +22,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir psycopg[binary]
 
+# Pre-download the embedding model during build (avoids runtime download delay)
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" || true
+
 # Copy application code
 COPY . .
 
