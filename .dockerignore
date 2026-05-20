@@ -1,0 +1,51 @@
+# Virtual environments
+jessica_venv/
+env/
+venv/
+.venv/
+
+# Local environment variables
+.env
+*.env
+
+# Frontend / UI (now part of the unified build)
+frontend/
+node_modules/
+**/node_modules/
+**/out/
+**/.next/
+
+
+# Cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.pytest_cache/
+
+# Version control
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+jessica_memory_store/
+
+# Temporary / workspace files
+workspace/
+scratch/
+uploads/
+
+# Docker itself
+Dockerfile
+.dockerignore
+
+# Test files
+test_*.py

@@ -1,0 +1,63 @@
+services:
+  #  PostgreSQL — conversation memory + long-term vector store
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: jessica_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-jessica}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  #  Jessica 3.0 — Python FastAPI backend (streaming agent)
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jessica_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_CONN_STRING: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-jessica}?sslmode=disable
+      FRONTEND_URL: http://localhost:3000
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Persist filesystem backend data (skills, memories, workspace)
+      - ./JESSICA.md:/app/JESSICA.md
+      - ./skills:/app/skills
+      - jessica_workspace:/app/workspace
+
+  #  Jessica UI — Next.js premium chat frontend
+  #
+  frontend:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: jessica_frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  jessica_workspace:

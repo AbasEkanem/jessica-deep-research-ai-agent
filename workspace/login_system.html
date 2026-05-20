@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Secure Authentication</title>
+    <link rel="stylesheet" href="login_system.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Welcome Back</h1>
+                <p>Please sign in to your account</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="login-form" novalidate>
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="you@example.com"
+                        required
+                        autocomplete="email"
+                        aria-describedby="emailError"
+                    >
+                    <span class="error-message" id="emailError"></span>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="••••••••"
+                            required
+                            autocomplete="current-password"
+                            aria-describedby="passwordError passwordRequirements"
+                        >
+                        <button 
+                            type="button" 
+                            class="toggle-password" 
+                            id="togglePassword"
+                            aria-label="Toggle password visibility"
+                        >
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
+                    <span class="error-message" id="passwordError"></span>
+                    <div class="password-requirements" id="passwordRequirements">
+                        <p>Password must contain:</p>
+                        <ul>
+                            <li id="req-length">At least 8 characters</li>
+                            <li id="req-uppercase">At least one uppercase letter</li>
+                            <li id="req-lowercase">At least one lowercase letter</li>
+                            <li id="req-number">At least one number</li>
+                            <li id="req-special">At least one special character (!@#$%^&*)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rememberMe" name="rememberMe">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="/forgot-password" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-loader" style="display: none;">
+                        <span class="spinner"></span>
+                    </span>
+                </button>
+            </form>
+
+            <!-- General Error Message -->
+            <div class="alert alert-error" id="generalError" style="display: none;">
+                <span class="alert-icon">⚠️</span>
+                <span class="alert-message"></span>
+                <button class="alert-close" aria-label="Close alert">×</button>
+            </div>
+
+            <!-- Success Message -->
+            <div class="alert alert-success" id="successMessage" style="display: none;">
+                <span class="alert-icon">✓</span>
+                <span class="alert-message"></span>
+            </div>
+
+            <!-- Login Footer -->
+            <div class="login-footer">
+                <p>Don't have an account? <a href="/register">Sign up</a></p>
+            </div>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="security-notice">
+            <p>🔒 Your connection is secure. All data is encrypted.</p>
+        </div>
+    </div>
+
+    <!-- Load JavaScript -->
+    <script src="login_system.js"></script>
+</body>
+</html>

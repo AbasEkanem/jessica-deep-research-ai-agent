@@ -1,0 +1,11 @@
+mkdir skills\multi-engine-research-orchestrator
+mkdir skills\cross-source-verification-engine
+mkdir skills\deep-domain-reasoning-specialist
+mkdir skills\academic-paper-architect
+mkdir skills\insight-synthesis-composer
+
+type nul > skills\multi-engine-research-orchestrator\SKILL.md
+type nul > skills\cross-source-verification-engine\SKILL.md
+type nul > skills\deep-domain-reasoning-specialist\SKILL.md
+type nul > skills\academic-paper-architect\SKILL.md
+type nul > skills\insight-synthesis-composer\SKILL.md

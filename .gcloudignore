@@ -1,0 +1,32 @@
+# Ignore everything except what we need
+# (Easier to start from scratch)
+
+# Python virtual envs
+**/venv/
+**/env/
+**/jessica_venv/
+
+# Node modules
+**/node_modules/
+
+# Next.js build artifacts
+**/.next/
+**/out/
+
+# Python cache
+**/__pycache__/
+*.pyc
+
+# Local DBs
+*.db
+*.sqlite
+
+# Git
+.git/
+
+# Only include the essential folders
+# (gcloudignore doesn't support 'include' well, so we ignore the big ones)
+frontend/
+uploads/
+workspace/
+scratch/
