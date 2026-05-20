@@ -33,24 +33,31 @@ from JESSICA import get_jessica_agent
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     """Initialize the agent with persistent Postgres memory."""
-    async with (
-            AsyncPostgresSaver.from_conn_string(CONN_STRING) as checkpointer,
-            AsyncPostgresStore.from_conn_string(
-                CONN_STRING,
-                index={
-                    "dims": 384,
-                    "embed": embedding_model,
-                }
-            ) as memory_store,
-        ):
-            # First-time setup (creates tables if missing)
-            await checkpointer.setup()
-            await memory_store.setup()
-            
-            app.state.agent = get_jessica_agent(checkpointer, memory_store)
-            app.state.memory_store = memory_store
-            print(f"[OK] Agent initialized - Persistent Postgres memory active")
-            yield
+    try:
+        async with (
+                AsyncPostgresSaver.from_conn_string(CONN_STRING) as checkpointer,
+                AsyncPostgresStore.from_conn_string(
+                    CONN_STRING,
+                    index={
+                        "dims": 384,
+                        "embed": embedding_model,
+                    }
+                ) as memory_store,
+            ):
+                # First-time setup (creates tables if missing)
+                await checkpointer.setup()
+                await memory_store.setup()
+                
+                app.state.agent = get_jessica_agent(checkpointer, memory_store)
+                app.state.memory_store = memory_store
+                print(f"[OK] Agent initialized - Persistent Postgres memory active", flush=True)
+                yield
+    except Exception as e:
+        print(f"[WARN] Could not connect to Postgres: {e}", flush=True)
+        print(f"[WARN] Starting in limited mode (no agent). Set POSTGRES_CONN_STRING env var.", flush=True)
+        app.state.agent = None
+        app.state.memory_store = None
+        yield
 
 
 app = FastAPI(
@@ -401,12 +408,14 @@ if os.path.exists("static"):
 if __name__ == "__main__":
     import uvicorn
 
+    port = int(os.environ.get("PORT", 8000))
+
     if sys.platform == "win32":
         # Re-use the SelectorEventLoop we created at module load time.
         # Run uvicorn inside it directly so psycopg async works correctly.
         loop = asyncio.get_event_loop()
-        config = uvicorn.Config(app, host="0.0.0.0", port=8000)
+        config = uvicorn.Config(app, host="0.0.0.0", port=port)
         server = uvicorn.Server(config)
         loop.run_until_complete(server.serve())
     else:
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        uvicorn.run(app, host="0.0.0.0", port=port)
