@@ -34,10 +34,12 @@ from JESSICA import get_jessica_agent
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     """Initialize the agent with persistent Postgres memory."""
     try:
+        # pipeline_mode=True disables prepared statements — required for Supabase pooler
         async with (
-                AsyncPostgresSaver.from_conn_string(CONN_STRING) as checkpointer,
+                AsyncPostgresSaver.from_conn_string(CONN_STRING, pipeline_mode=True) as checkpointer,
                 AsyncPostgresStore.from_conn_string(
                     CONN_STRING,
+                    pipeline_mode=True,
                     index={
                         "dims": 384,
                         "embed": embedding_model,
