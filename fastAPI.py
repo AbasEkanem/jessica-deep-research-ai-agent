@@ -303,7 +303,7 @@ async def ask(http_request: Request, body: StoryRequest):
             result = await agent.ainvoke(
                 {"messages": [{"role": "user", "content": enriched_message}]},
                 config={
-                    "configurable": {"thread_id": body.thread_id},
+                    "configurable": {"thread_id": body.thread_id, "user_id": body.user_id},
                     "recursion_limit": 150,
                     "callbacks": [handler],
                 }

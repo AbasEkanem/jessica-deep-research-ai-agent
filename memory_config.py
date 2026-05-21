@@ -29,7 +29,5 @@ class _LazyEmbedding:
     """Proxy that delays HuggingFace model download until first use."""
     def __getattr__(self, name):
         return getattr(get_embedding_model(), name)
-    def __call__(self, *args, **kwargs):
-        return get_embedding_model()(*args, **kwargs)
 
 embedding_model = _LazyEmbedding()
