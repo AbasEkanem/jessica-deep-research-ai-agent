@@ -6,17 +6,18 @@ from langchain_huggingface import HuggingFaceEmbeddings
 load_dotenv()
 
 def _url_to_dsn(url: str) -> str:
-    """Convert a postgres:// URL to a key=value conninfo string,
-    properly decoding percent-encoded characters in the password
-    (e.g. %26 → &). This avoids psycopg3 auth failures caused by
-    un-decoded special chars on Cloud Run."""
+    """Convert a postgres:// URL to a key=value conninfo string
+    without decoding the password. If the password literally contains
+    '%26', this ensures psycopg3 receives the exact string instead of
+    incorrectly decoding it to '&'."""
     try:
         p = urlparse(url)
         host = p.hostname or "localhost"
         port = p.port or 5432
         dbname = (p.path or "/postgres").lstrip("/") or "postgres"
         user = unquote(p.username or "postgres")
-        password = unquote(p.password or "")
+        # DO NOT unquote the password. The literal string is required.
+        password = p.password or ""
         # Escape backslash and single-quote for key=value conninfo format
         pw_esc = password.replace("\\", "\\\\").replace("'", "\\'")
         # Forward any query-string params (e.g. sslmode=require)
