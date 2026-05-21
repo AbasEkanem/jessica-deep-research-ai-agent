@@ -4,6 +4,9 @@ WORKDIR /app/ui
 COPY ui/package*.json ./
 RUN npm ci
 COPY ui/ ./
+# Force relative API URLs in production (no localhost)
+RUN rm -f .env.local .env
+ENV NEXT_PUBLIC_API_URL=""
 RUN npm run build
 
 # --- Stage 2: Final Backend Image ---
