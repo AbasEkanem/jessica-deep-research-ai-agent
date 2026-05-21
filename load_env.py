@@ -22,10 +22,10 @@ linkup_api = os.getenv("LINKUP_API_KEY")
 # load and initialize the chat_model
 chat_model = ChatNVIDIA(
   model="nvidia/nemotron-3-nano-30b-a3b",
-  api_key=nvidia_api, 
+  api_key=nvidia_api,
   temperature=0.7,
   top_p=0.95,
-  max_tokens=16384,
+  max_tokens=4096,
 )
 
 

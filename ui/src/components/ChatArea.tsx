@@ -499,23 +499,28 @@ function AgentAvatar({ size = 32, isWorking = false }: { size?: number; isWorkin
       {isWorking && (
         <div style={{
           position: "absolute", inset: 0, borderRadius: "50%", padding: 1.5,
-          background: "conic-gradient(from 0deg, #8ab4f8, #c4b5fd, #f0abfc, #8ab4f8)",
+          background: "conic-gradient(from 0deg, var(--accent), #F59E0B, #f0abfc, var(--accent))",
           mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
           maskComposite: "exclude",
           WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
           WebkitMaskComposite: "xor",
           animation: "jessica-orbit 1.2s linear infinite",
-          filter: "drop-shadow(0 0 6px rgba(196,181,253,0.5))",
+          filter: "drop-shadow(0 0 6px rgba(217,115,85,0.6))",
         }} />
       )}
-      <div style={{
-        width: size, height: size, borderRadius: "50%",
-        background: "linear-gradient(135deg, var(--accent, #D97757), #F59E0B)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        position: "relative",
-      }}>
-        <Sparkles size={Math.round(size * 0.55)} color="white" />
-      </div>
+      <Image
+        src="/jessica-avatar.png"
+        alt="Jessica"
+        width={size}
+        height={size}
+        style={{
+          borderRadius: "50%",
+          objectFit: "cover",
+          objectPosition: "top",
+          position: "relative",
+          border: "1.5px solid rgba(217,115,85,0.25)",
+        }}
+      />
     </div>
   );
 }
@@ -851,13 +856,13 @@ function MarkdownRenderer({ content }: { content: string }) {
             return <code className={className}>{children}</code>;
           }
           return (
-            <code style={{ fontFamily: "'JetBrains Mono',monospace", background: "var(--surface-2)", padding: "2px 5px", borderRadius: 4, fontSize: 12.5, color: "var(--text)", border: "1px solid var(--border)" }}>
+            <code style={{ fontFamily: "'Fira Code','JetBrains Mono',monospace", background: "rgba(255,255,255,0.05)", padding: "2px 6px", borderRadius: 5, fontSize: 12.5, color: "var(--accent)", border: "1px solid rgba(255,255,255,0.08)" }}>
               {children}
             </code>
           );
         },
         pre: ({ children }) => (
-          <pre style={{ fontFamily: "'JetBrains Mono',monospace", background: "var(--surface-3)", border: "1px solid var(--border-med)", borderRadius: 10, padding: "13px 16px", overflowX: "auto", marginBottom: 12, fontSize: 12.5, color: "var(--text)", lineHeight: 1.6 }}>
+          <pre style={{ fontFamily: "'Fira Code','JetBrains Mono',monospace", background: "#0C0A09", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 18px", overflowX: "auto", marginBottom: 12, fontSize: 12.5, color: "var(--text)", lineHeight: 1.65, boxShadow: "var(--shadow-sm)" }}>
             {children}
           </pre>
         ),

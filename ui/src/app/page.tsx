@@ -195,19 +195,24 @@ export default function HomePage() {
       <div className="mobile-top-bar" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 60,
         height: 52, alignItems: "center", justifyContent: "space-between",
-        padding: "0 8px",
+        padding: "0 4px",
         background: "var(--bg-sidebar)",
         borderBottom: "1px solid var(--border)",
       }}>
         <button onClick={() => setSidebarOpen(v => !v)} title="Menu" style={iconBtnStyle}>
           <Menu size={21} />
         </button>
-        <span style={{ fontSize: 16, fontWeight: 650, color: "var(--text)", letterSpacing: "-0.02em" }}>
-          Jessica
+        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.02em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "calc(100vw - 120px)" }}>
+          {currentThread?.title ?? "Jessica"}
         </span>
-        <button onClick={handleNewThread} title="New chat" style={{ ...iconBtnStyle, color: "var(--text)" }}>
-          <PenSquare size={19} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <button onClick={toggle} title={isDark ? "Light mode" : "Dark mode"} style={{ ...iconBtnStyle, color: "var(--text-muted)" }}>
+            {isDark ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
+          <button onClick={handleNewThread} title="New chat" style={{ ...iconBtnStyle, color: "var(--text)" }}>
+            <PenSquare size={19} />
+          </button>
+        </div>
       </div>
 
       {/* ── Full Sidebar Panel (slides in) ── */}

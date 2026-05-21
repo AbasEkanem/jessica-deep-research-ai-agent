@@ -240,13 +240,18 @@ export default function Sidebar({
         }}>
           {/* Logo mark */}
           <div style={{ marginBottom: 8, padding: "4px 0" }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: 7,
-              background: "var(--accent)", display: "flex",
-              alignItems: "center", justifyContent: "center",
-            }}>
-              <Sparkles size={14} color="white" />
-            </div>
+            <Image
+              src="/jessica-avatar.png"
+              alt="Jessica"
+              width={28}
+              height={28}
+              style={{
+                borderRadius: "50%",
+                objectFit: "cover",
+                objectPosition: "top",
+                border: "1.5px solid rgba(217,115,85,0.25)",
+              }}
+            />
           </div>
 
           {/* New chat */}
@@ -286,13 +291,19 @@ export default function Sidebar({
         }}>
           {/* Wordmark + logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div style={{
-              width: 26, height: 26, borderRadius: 6,
-              background: "var(--accent)", display: "flex",
-              alignItems: "center", justifyContent: "center", flexShrink: 0,
-            }}>
-              <Sparkles size={13} color="white" />
-            </div>
+            <Image
+              src="/jessica-avatar.png"
+              alt="Jessica"
+              width={26}
+              height={26}
+              style={{
+                borderRadius: "50%",
+                objectFit: "cover",
+                objectPosition: "top",
+                border: "1.5px solid rgba(217,115,85,0.25)",
+                flexShrink: 0,
+              }}
+            />
             <span style={{
               fontSize: 15, fontWeight: 600, color: "var(--text)",
               fontFamily: "var(--font-body)", letterSpacing: "-0.02em",
