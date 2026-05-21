@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  useState, useRef, useEffect, useCallback, ChangeEvent,
+  useState, useRef, useEffect, useCallback, useMemo, ChangeEvent,
 } from "react";
 import {
   Send, Square, ThumbsUp, Share2, Copy, RefreshCw,
   Edit2, Check, Paperclip, Globe, X, Loader2,
   User, ChevronDown, ChevronUp, AlertTriangle,
-  CheckCircle2, Clock, Zap, Brain,
+  CheckCircle2, Clock, Zap, Brain, Sparkles,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -74,45 +74,207 @@ const PHASE_META: Record<string, { color: string; icon: string; label: string }>
 };
 
 // ─────────────────────────────────────────────
-// Helpers
+// Helpers — Time-Aware Greeting & Welcome
 // ─────────────────────────────────────────────
-interface TimeGreeting {
-  headline: string;
-  emoji: string;
-  sub: string;
+const PALETTES = {
+  dawn:      { gradFrom: "#FEF3C7", gradTo: "#FDE68A", accent: "#D97706", dot: "#F59E0B" },
+  morning:   { gradFrom: "#DBEAFE", gradTo: "#BFDBFE", accent: "#2563EB", dot: "#3B82F6" },
+  coffee:    { gradFrom: "#FDF6EC", gradTo: "#FDE8C8", accent: "#92400E", dot: "#D97706" },
+  lunch:     { gradFrom: "#DCFCE7", gradTo: "#BBF7D0", accent: "#166534", dot: "#22C55E" },
+  afternoon: { gradFrom: "#EDE9FE", gradTo: "#DDD6FE", accent: "#7C3AED", dot: "#8B5CF6" },
+  evening:   { gradFrom: "#FEE2E2", gradTo: "#FED7AA", accent: "#B45309", dot: "#F97316" },
+  night:     { gradFrom: "#1E1B4B", gradTo: "#312E81", accent: "#818CF8", dot: "#6366F1" },
+};
+
+const CHIPS = {
+  dawn:      [{ icon: "✍️", label: "Help me plan my day" }, { icon: "📖", label: "Explain something" }, { icon: "🎯", label: "Set a goal with me" }],
+  morning:   [{ icon: "📝", label: "Draft an email" }, { icon: "💡", label: "Brainstorm ideas" }, { icon: "🔍", label: "Research a topic" }],
+  coffee:    [{ icon: "☕", label: "Quick summary" }, { icon: "📊", label: "Analyse this data" }, { icon: "💬", label: "Talk through a problem" }],
+  lunch:     [{ icon: "⚡", label: "Fast answer needed" }, { icon: "🧩", label: "Solve a puzzle" }, { icon: "📅", label: "Help me plan ahead" }],
+  afternoon: [{ icon: "🖊️", label: "Edit my writing" }, { icon: "💻", label: "Help me code" }, { icon: "📚", label: "Summarise a document" }],
+  evening:   [{ icon: "🌇", label: "Reflect on my day" }, { icon: "🍝", label: "Recipe ideas" }, { icon: "📕", label: "Recommend a read" }],
+  night:     [{ icon: "🌙", label: "Creative writing" }, { icon: "🔭", label: "Deep-dive question" }, { icon: "🎵", label: "Music or film recs" }],
+};
+
+interface TimeContext {
+  greeting: string;
+  subline: string;
+  icon: string;
+  palette: keyof typeof PALETTES;
+  mealTag?: string;
 }
 
-function getTimeGreeting(): TimeGreeting {
-  const h = new Date().getHours();
-  const day = new Date().getDay();
+function getTimeContext(): TimeContext {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const day = now.getDay(); // 0=Sun, 6=Sat
+  const totalMins = h * 60 + m;
 
-  if (h < 5) {
-    if (day === 0 || day === 6) return { headline: "Weekend all-nighter?", emoji: "🌌", sub: "No rush tomorrow. We can go as deep as you want." };
-    return { headline: "Burning the midnight oil?", emoji: "🌙", sub: "I'm up. Let's make these late hours count." };
+  const dayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayName = dayLabels[day];
+  const isWeekend = day === 0 || day === 6;
+  const isMonday = day === 1;
+  const isFriday = day === 5;
+
+  // Day-of-week flavour suffix
+  let daySuffix = "";
+  if (isMonday)       daySuffix = "— fresh start to the week";
+  else if (isFriday)  daySuffix = "— almost the weekend";
+  else if (day === 0) daySuffix = "— hope your Sunday is restful";
+  else if (day === 6) daySuffix = "— happy Saturday";
+
+  // ── Time slots ───────────────────────────────────────────
+  let slot: TimeContext;
+
+  if (totalMins >= 300 && totalMins < 420) {
+    // 05:00–07:00  Dawn / early bird
+    slot = {
+      greeting: "Early bird! Good morning",
+      subline: isWeekend
+        ? "An early weekend start — love the dedication."
+        : "You're up before the crowd. Let's make it count.",
+      icon: "🌅",
+      palette: "dawn",
+    };
+  } else if (totalMins >= 420 && totalMins < 570) {
+    // 07:00–09:30  Breakfast time
+    slot = {
+      greeting: "Good morning",
+      subline: isWeekend
+        ? "Weekend breakfast vibes — no rush today."
+        : `Happy ${dayName}! Breakfast hour — fuel up before we dive in.`,
+      icon: "🍳",
+      palette: "morning",
+      mealTag: "Breakfast time",
+    };
+  } else if (totalMins >= 570 && totalMins < 660) {
+    // 09:30–11:00  Mid-morning coffee
+    slot = {
+      greeting: "Good morning",
+      subline: isWeekend
+        ? "Mid-morning on a " + dayName + " — the perfect pace."
+        : "Mid-morning. Perfect time for a second coffee and a big idea.",
+      icon: "☕",
+      palette: "coffee",
+      mealTag: "Coffee o'clock",
+    };
+  } else if (totalMins >= 660 && totalMins < 750) {
+    // 11:00–12:30  Pre-lunch
+    slot = {
+      greeting: "Good morning",
+      subline: isWeekend
+        ? `${dayName} morning — what are we getting into today?`
+        : "Almost noon. Let's power through before the lunch break.",
+      icon: "🕚",
+      palette: "morning",
+    };
+  } else if (totalMins >= 750 && totalMins < 840) {
+    // 12:30–14:00  Lunch
+    slot = {
+      greeting: "Good afternoon",
+      subline: isWeekend
+        ? "Lunchtime on a " + dayName + " — eat something good."
+        : `Lunch break on ${dayName}. Quick question before the sandwich?`,
+      icon: "🥗",
+      palette: "lunch",
+      mealTag: "Lunch break",
+    };
+  } else if (totalMins >= 840 && totalMins < 930) {
+    // 14:00–15:30  Afternoon
+    slot = {
+      greeting: "Good afternoon",
+      subline: isWeekend
+        ? "A lazy " + dayName + " afternoon — perfect for deep dives."
+        : isFriday
+          ? "Friday afternoon — let's close the week strong."
+          : "Post-lunch afternoon. Deep work mode or a quick assist?",
+      icon: "🌤",
+      palette: "afternoon",
+    };
+  } else if (totalMins >= 930 && totalMins < 1020) {
+    // 15:30–17:00  Afternoon coffee
+    slot = {
+      greeting: "Good afternoon",
+      subline: isWeekend
+        ? "Afternoon tea o'clock — you deserve it."
+        : isFriday
+          ? "3 PM on a Friday — you've earned that afternoon coffee."
+          : "☕ Afternoon coffee window. Refuel and let's crack something.",
+      icon: "☕",
+      palette: "coffee",
+      mealTag: "Afternoon coffee",
+    };
+  } else if (totalMins >= 1020 && totalMins < 1140) {
+    // 17:00–19:00  Early evening / dinner time
+    slot = {
+      greeting: "Good evening",
+      subline: isWeekend
+        ? "Early evening on a " + dayName + " — dinner plans later?"
+        : isFriday
+          ? "Friday evening — wrapping up or heading out?"
+          : "End of the work day — dinner time soon. What can I help with?",
+      icon: "🍝",
+      palette: "evening",
+      mealTag: "Dinner time",
+    };
+  } else if (totalMins >= 1140 && totalMins < 1260) {
+    // 19:00–21:00  Evening
+    slot = {
+      greeting: "Good evening",
+      subline: isWeekend
+        ? "A lovely " + dayName + " evening. What's on your mind?"
+        : "Evening hours — the best time for creative thinking.",
+      icon: "🌆",
+      palette: "evening",
+    };
+  } else if (totalMins >= 1260 && totalMins < 1380) {
+    // 21:00–23:00  Night
+    slot = {
+      greeting: "Good evening",
+      subline: isWeekend
+        ? `Late ${dayName} — the night is young.`
+        : "Burning the midnight oil? I'm right here with you.",
+      icon: "🌙",
+      palette: "night",
+    };
+  } else {
+    // 23:00–05:00  Late night
+    slot = {
+      greeting: "Night owl mode",
+      subline: "Way past midnight — the truly interesting work happens now.",
+      icon: "🦉",
+      palette: "night",
+    };
   }
-  if (h < 8) {
-    if (day === 0 || day === 6) return { headline: "Early weekend rise.", emoji: "🌅", sub: "Quiet weekend mornings are the best. What's on your mind?" };
-    return { headline: "Early bird, I see.", emoji: "☕", sub: "Best time to think clearly. What are we solving?" };
+
+  if (daySuffix && !slot.mealTag) {
+    slot.subline = slot.subline.replace(/\.$/, "") + (daySuffix ? " " + daySuffix + "." : ".");
   }
-  if (h < 10) return { headline: "Time for a coffee break?", emoji: "☕", sub: "Grab your cup — I've got research, writing, whatever you need." };
-  if (h < 12) return { headline: "Good morning.", emoji: "🌤", sub: "Momentum is building. What shall we tackle?" };
-  if (h < 14) return { headline: "Lunch break?", emoji: "🥗", sub: "Good time to queue something up while you eat." };
-  if (h < 17) return { headline: "Good afternoon.", emoji: "☀️", sub: "Midday focus. What do you want to dig into?" };
-  if (h < 19) {
-    if (day === 5) return { headline: "Happy Friday evening!", emoji: "🎉", sub: "One last push — or just curious? Either works." };
-    return { headline: "Dinner time soon.", emoji: "🍽", sub: "Wrapping up for the day? I'll be quick." };
-  }
-  if (h < 22) {
-    if (day === 0 || day === 6) return { headline: "Weekend evening.", emoji: "🌿", sub: "Relaxed pace or late sprint — your call." };
-    return { headline: "Good evening.", emoji: "🌆", sub: "Day's winding down. What's on your mind?" };
-  }
-  if (day === 5 || day === 6) return { headline: "Late weekend vibes.", emoji: "✨", sub: "No alarm tomorrow. Let's explore something fun or dive deep." };
-  return { headline: "Late night session.", emoji: "🌃", sub: "Night owl mode. Let's get into it." };
+
+  return slot;
 }
 
-function getGreeting() {
-  const g = getTimeGreeting();
-  return { headline: g.headline, emoji: g.emoji, timeLine: g.headline, dayLine: g.sub };
+interface WelcomeScreenProps {
+  timeCtx: TimeContext;
+  userName?: string;
+}
+
+function WelcomeScreen({ timeCtx, userName }: WelcomeScreenProps) {
+  const pal = PALETTES[timeCtx.palette] || PALETTES.morning;
+  const firstName = userName ? userName.split(" ")[0] : "User";
+
+  return (
+    <div className="welcome">
+
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 400, color: "var(--text)", marginBottom: 8, letterSpacing: "-0.025em" }}>
+        {timeCtx.greeting}, {firstName}!
+      </h1>
+      <p className="welcome-sub" style={{ fontSize: 14, color: "var(--text-2)", maxWidth: 380, lineHeight: 1.65 }}>
+        {timeCtx.subline}
+      </p>
+    </div>
+  );
 }
 
 function sanitizeMath(content: string): string {
@@ -346,8 +508,13 @@ function AgentAvatar({ size = 32, isWorking = false }: { size?: number; isWorkin
           filter: "drop-shadow(0 0 6px rgba(196,181,253,0.5))",
         }} />
       )}
-      <div style={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", background: "var(--surface-3)", position: "relative" }}>
-        <Image src="/jessica-png.jpg" alt="Jessica" width={size} height={size} className="object-cover" />
+      <div style={{
+        width: size, height: size, borderRadius: "50%",
+        background: "linear-gradient(135deg, var(--accent, #D97757), #F59E0B)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        position: "relative",
+      }}>
+        <Sparkles size={Math.round(size * 0.55)} color="white" />
       </div>
     </div>
   );
@@ -729,30 +896,7 @@ function Message({ message, isLatest, onRegenerate, onEdit, onAction }: MessageP
   const [editVal, setEditVal] = useState(message.content);
   const [liked, setLiked] = useState(false);
 
-  const isNewResponse =
-    !message.isStreaming &&
-    message.role === "jessica" &&
-    isLatest &&
-    Date.now() - message.timestamp < 3_000;
-
-  const sanitized = sanitizeMath(message.content);
-  const [displayed, setDisplayed] = useState(isNewResponse ? "" : sanitized);
-
-  useEffect(() => { setDisplayed(sanitizeMath(message.content)); }, [message.content]);
-
-  useEffect(() => {
-    if (!isNewResponse) return;
-    let i = 0;
-    const speed = 12;
-    const chunkSize = 5;
-    const timer = setInterval(() => {
-      i += chunkSize;
-      if (i >= sanitized.length) { setDisplayed(sanitized); clearInterval(timer); }
-      else setDisplayed(sanitized.substring(0, i));
-    }, speed);
-    return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const displayed = sanitizeMath(message.content);
 
   const submitEdit = () => {
     if (editVal.trim()) { onEdit(editVal.trim()); setEditing(false); }
@@ -939,7 +1083,21 @@ export default function ChatArea({ threadId, userId, userName, onFirstMessage }:
   const abortRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const [timeCtx, setTimeCtx] = useState<TimeContext>(getTimeContext);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeCtx(getTimeContext());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   const isFirstMsg = messages.length === 0;
+  const chips = CHIPS[timeCtx.palette] || CHIPS.morning;
+
+  // Pick the adaptive day-of-week greeting variant
+  const greetingVariant = useMemo(() => pickGreeting(), []);
+  const GreetingComponent = greetingVariant.C;
 
   // ── NEW: derive input mode from last agent message ──
   const lastAgentMsg = [...messages].reverse().find(m => m.role === "jessica" && !m.isStreaming) as ExtendedChatMessage | undefined;
@@ -1140,26 +1298,22 @@ export default function ChatArea({ threadId, userId, userName, onFirstMessage }:
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-end",
+            alignItems: "center",
             width: "100%",
-            maxWidth: 680,
+            maxWidth: 800,
             margin: "0 auto",
-            padding: "16px 24px 4px",
+            padding: "16px 24px 24px",
             boxSizing: "border-box"
           } : {
             width: "100%",
-            maxWidth: 680,
+            maxWidth: 800,
             margin: "0 auto",
             padding: "24px 24px 8px",
             boxSizing: "border-box"
           }}
         >
           {isFirstMsg ? (
-            (() => {
-              const gv = pickGreeting();
-              const GreetingComp = gv.C;
-              const gData = getTimeGreeting();
-              return <GreetingComp data={gData} userName={userName} onSend={(text: string) => sendMessage(text)} />;
-            })()
+            <GreetingComponent userName={userName} onSend={(text: string) => sendMessage(text)} />
           ) : (
             messages.map((m, idx) => (
               <Message
@@ -1184,7 +1338,7 @@ export default function ChatArea({ threadId, userId, userName, onFirstMessage }:
 
       {/* ── Error banner ── */}
       {error && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, margin: "0 16px 10px", maxWidth: 680, alignSelf: "center", width: "100%" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, margin: "0 16px 10px", maxWidth: 800, alignSelf: "center", width: "100%" }}>
           <AlertTriangle size={14} style={{ color: "#ef4444", flexShrink: 0 }} />
           <span style={{ fontSize: 12.5, color: "#ef4444", flex: 1 }}>{error}</span>
           <button onClick={() => setError(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 0 }}><X size={13} /></button>
@@ -1193,8 +1347,8 @@ export default function ChatArea({ threadId, userId, userName, onFirstMessage }:
 
       {/* ── Input area ── */}
       <div 
-        className="px-4 md:px-6 w-full max-w-[680px] mx-auto relative z-10 chat-input-container"
-        style={isFirstMsg ? { marginBottom: "26vh", transition: "margin-bottom 0.28s ease" } : { marginBottom: "0px", transition: "margin-bottom 0.28s ease" }}
+        className="px-4 md:px-6 w-full max-w-[800px] mx-auto relative z-10 chat-input-container"
+        style={{ marginBottom: "44px" }}
       >
         {selectedFile && (
           <div style={{ marginBottom: 10, animation: "fade-in 0.25s ease" }}>
@@ -1231,7 +1385,7 @@ export default function ChatArea({ threadId, userId, userName, onFirstMessage }:
             </div>
           ) : (
             // Default: normal textarea
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 10, padding: "0 14px 11px" }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 10, padding: "10px 14px 12px" }}>
               <textarea
                 ref={inputRef}
                 value={input}
@@ -1241,7 +1395,7 @@ export default function ChatArea({ threadId, userId, userName, onFirstMessage }:
                 placeholder={isUploading ? "Uploading…" : "Ask Jessica to research anything…"}
                 disabled={isStreaming || isUploading}
                 rows={1}
-                style={{ flex: 1, background: "none", border: "none", outline: "none", resize: "none", fontSize: 14, color: "var(--text)", lineHeight: 1.65, minHeight: 24, maxHeight: 180, fontFamily: "inherit" }}
+                style={{ flex: 1, background: "none", border: "none", outline: "none", resize: "none", fontSize: 14, color: "var(--text)", lineHeight: 1.65, minHeight: 48, maxHeight: 180, fontFamily: "inherit" }}
               />
               <input ref={fileRef} type="file" style={{ display: "none" }} onChange={handleFileInput} accept=".pdf,.doc,.docx,.txt,.md,.csv,.json,image/*" />
               <button
@@ -1266,6 +1420,8 @@ export default function ChatArea({ threadId, userId, userName, onFirstMessage }:
             </div>
           )}
         </div>
+
+        {/* Chips are rendered inline inside WelcomeScreen component */}
 
         <p style={{ fontSize: 10.5, color: "var(--text-dim)", textAlign: "center", marginTop: 6, lineHeight: 1.5 }}>
           Jessica may display inaccurate info — always verify important results.

@@ -2,324 +2,423 @@
 
 import { useState, useEffect } from "react";
 
-// ── helpers ──────────────────────────────────────────────────────
-function useTypewriter(text: string, speed = 55, delay = 600) {
-  const [shown, setShown] = useState("");
-  const [done, setDone] = useState(false);
-  useEffect(() => {
-    setShown("");
-    setDone(false);
-    const t = setTimeout(() => {
-      let i = 0;
-      const id = setInterval(() => {
-        i++;
-        setShown(text.slice(0, i));
-        if (i >= text.length) {
-          clearInterval(id);
-          setDone(true);
-        }
-      }, speed);
-      return () => clearInterval(id);
-    }, delay);
-    return () => clearTimeout(t);
-  }, [text, speed, delay]);
-  return { shown, done };
+/* ─────────────────────────────────────────────────────────────
+   TIME-AWARE GREETING ENGINE
+   ───────────────────────────────────────────────────────────── */
+export interface TimeContext {
+  greeting: string;
+  subline: string;
+  icon: string;
+  palette: "dawn" | "morning" | "coffee" | "lunch" | "afternoon" | "evening" | "night";
+  mealTag?: string;
 }
 
-function useClock() {
-  const [time, setTime] = useState(new Date());
+export function getTimeContext(): TimeContext {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+  const day = now.getDay(); // 0=Sun, 6=Sat
+  const totalMins = h * 60 + m;
+
+  const dayLabels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayName = dayLabels[day];
+  const isWeekend = day === 0 || day === 6;
+  const isMonday = day === 1;
+  const isFriday = day === 5;
+
+  // Day-of-week flavour suffix
+  let daySuffix = "";
+  if (isMonday)       daySuffix = "— fresh start to the week";
+  else if (isFriday)  daySuffix = "— almost the weekend";
+  else if (day === 0) daySuffix = "— hope your Sunday is restful";
+  else if (day === 6) daySuffix = "— happy Saturday";
+
+  let slot: TimeContext;
+
+  if (totalMins >= 300 && totalMins < 420) {
+    // 05:00–07:00  Dawn / early bird
+    slot = {
+      greeting: "Early bird! Good morning",
+      subline: isWeekend
+        ? "An early weekend start — love the dedication."
+        : "You're up before the crowd. Let's make it count.",
+      icon: "🌅",
+      palette: "dawn",
+    };
+  } else if (totalMins >= 420 && totalMins < 570) {
+    // 07:00–09:30  Breakfast time
+    slot = {
+      greeting: "Good morning",
+      subline: isWeekend
+        ? "Weekend breakfast vibes — no rush today."
+        : `Happy ${dayName}! Breakfast hour — fuel up before we dive in.`,
+      icon: "🍳",
+      palette: "morning",
+      mealTag: "Breakfast time",
+    };
+  } else if (totalMins >= 570 && totalMins < 660) {
+    // 09:30–11:00  Mid-morning coffee
+    slot = {
+      greeting: "Good morning",
+      subline: isWeekend
+        ? "Mid-morning on a " + dayName + " — the perfect pace."
+        : "Mid-morning. Perfect time for a second coffee and a big idea.",
+      icon: "☕",
+      palette: "coffee",
+      mealTag: "Coffee o'clock",
+    };
+  } else if (totalMins >= 660 && totalMins < 750) {
+    // 11:00–12:30  Pre-lunch
+    slot = {
+      greeting: "Good morning",
+      subline: isWeekend
+        ? `${dayName} morning — what are we getting into today?`
+        : "Almost noon. Let's power through before the lunch break.",
+      icon: "🕚",
+      palette: "morning",
+    };
+  } else if (totalMins >= 750 && totalMins < 840) {
+    // 12:30–14:00  Lunch
+    slot = {
+      greeting: "Good afternoon",
+      subline: isWeekend
+        ? "Lunchtime on a " + dayName + " — eat something good."
+        : `Lunch break on ${dayName}. Quick question before the sandwich?`,
+      icon: "🥗",
+      palette: "lunch",
+      mealTag: "Lunch break",
+    };
+  } else if (totalMins >= 840 && totalMins < 930) {
+    // 14:00–15:30  Afternoon
+    slot = {
+      greeting: "Good afternoon",
+      subline: isWeekend
+        ? "A lazy " + dayName + " afternoon — perfect for deep dives."
+        : isFriday
+          ? "Friday afternoon — let's close the week strong."
+          : "Post-lunch afternoon. Deep work mode or a quick assist?",
+      icon: "🌤",
+      palette: "afternoon",
+    };
+  } else if (totalMins >= 930 && totalMins < 1020) {
+    // 15:30–17:00  Afternoon coffee
+    slot = {
+      greeting: "Good afternoon",
+      subline: "Time for afternoon coffee ☕ Refuel and let's crack something.",
+      icon: "☕",
+      palette: "coffee",
+      mealTag: "Afternoon coffee",
+    };
+  } else if (totalMins >= 1020 && totalMins < 1140) {
+    // 17:00–19:00  Early evening / dinner time
+    slot = {
+      greeting: "Good evening",
+      subline: isWeekend
+        ? "Early evening on a " + dayName + " — dinner plans later?"
+        : isFriday
+          ? "Friday evening — wrapping up or heading out?"
+          : "End of the work day — dinner time soon. What can I help with?",
+      icon: "🍝",
+      palette: "evening",
+      mealTag: "Dinner time",
+    };
+  } else if (totalMins >= 1140 && totalMins < 1260) {
+    // 19:00–21:00  Evening
+    slot = {
+      greeting: "Good evening",
+      subline: isWeekend
+        ? "A lovely " + dayName + " evening. What's on your mind?"
+        : "Evening hours — the best time for creative thinking.",
+      icon: "🌆",
+      palette: "evening",
+    };
+  } else if (totalMins >= 1260 && totalMins < 1380) {
+    // 21:00–23:00  Night
+    slot = {
+      greeting: "Good evening",
+      subline: isWeekend
+        ? `Late ${dayName} — the night is young.`
+        : "Burning the midnight oil? I'm right here with you.",
+      icon: "🌙",
+      palette: "night",
+    };
+  } else {
+    // 23:00–05:00  Late night
+    slot = {
+      greeting: "Night owl mode",
+      subline: "Way past midnight — the truly interesting work happens now.",
+      icon: "🦉",
+      palette: "night",
+    };
+  }
+
+  if (daySuffix && !slot.mealTag) {
+    slot.subline = slot.subline.replace(/\.$/, "") + (daySuffix ? " " + daySuffix + "." : ".");
+  }
+
+  return slot;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PALETTE DEFINITIONS FOR WELCOME SCREEN
+   ───────────────────────────────────────────────────────────── */
+export const PALETTES = {
+  dawn:      { gradFrom: "#FEF3C7", gradTo: "#FDE68A", accent: "#D97706", dot: "#F59E0B" },
+  morning:   { gradFrom: "#DBEAFE", gradTo: "#BFDBFE", accent: "#2563EB", dot: "#3B82F6" },
+  coffee:    { gradFrom: "#FDF6EC", gradTo: "#FDE8C8", accent: "#92400E", dot: "#D97706" },
+  lunch:     { gradFrom: "#DCFCE7", gradTo: "#BBF7D0", accent: "#166534", dot: "#22C55E" },
+  afternoon: { gradFrom: "#EDE9FE", gradTo: "#DDD6FE", accent: "#7C3AED", dot: "#8B5CF6" },
+  evening:   { gradFrom: "#FEE2E2", gradTo: "#FED7AA", accent: "#B45309", dot: "#F97316" },
+  night:     { gradFrom: "#1E1B4B", gradTo: "#312E81", accent: "#818CF8", dot: "#6366F1" },
+};
+
+/* ─────────────────────────────────────────────────────────────
+   SUGGESTION CHIPS DEFINITIONS
+   ───────────────────────────────────────────────────────────── */
+export const CHIPS = {
+  dawn:      [{ icon: "✍️", label: "Help me plan my day" }, { icon: "📖", label: "Explain something" }, { icon: "🎯", label: "Set a goal with me" }],
+  morning:   [{ icon: "📝", label: "Draft an email" }, { icon: "💡", label: "Brainstorm ideas" }, { icon: "🔍", label: "Research a topic" }],
+  coffee:    [{ icon: "☕", label: "Quick summary" }, { icon: "📊", label: "Analyse this data" }, { icon: "💬", label: "Talk through a problem" }],
+  lunch:     [{ icon: "⚡", label: "Fast answer needed" }, { icon: "🧩", label: "Solve a puzzle" }, { icon: "📅", label: "Help me plan ahead" }],
+  afternoon: [{ icon: "🖊️", label: "Edit my writing" }, { icon: "💻", label: "Help me code" }, { icon: "📚", label: "Summarise a document" }],
+  evening:   [{ icon: "🌇", label: "Reflect on my day" }, { icon: "🍝", label: "Recipe ideas" }, { icon: "📕", label: "Recommend a read" }],
+  night:     [{ icon: "🌙", label: "Creative writing" }, { icon: "🔭", label: "Deep-dive question" }, { icon: "🎵", label: "Music or film recs" }],
+};
+
+/* ─────────────────────────────────────────────────────────────
+   SHARED WELCOME SCREEN COMPONENT
+   ───────────────────────────────────────────────────────────── */
+export function WelcomeScreen({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
+  const [timeCtx, setTimeCtx] = useState<TimeContext>(getTimeContext);
+
   useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000);
+    const id = setInterval(() => setTimeCtx(getTimeContext()), 60_000);
     return () => clearInterval(id);
   }, []);
-  return time;
-}
 
-// GREETING 1 — Good Morning, Sunrise warmth
-export function Greeting1({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
-  const [hour, setHour] = useState(12);
-  const [mounted, setMounted] = useState(false);
+  const pal = PALETTES[timeCtx.palette] || PALETTES.morning;
+  const chips = CHIPS[timeCtx.palette] || CHIPS.morning;
 
-  useEffect(() => {
-    setHour(new Date().getHours());
-    setMounted(true);
-  }, []);
-
-  const isMorning = hour < 12;
-  const isAfternoon = hour >= 12 && hour < 17;
-  const tag = isMorning ? "Good morning" : isAfternoon ? "Good afternoon" : "Good evening";
-  const headline = isMorning ? "Rise and shine —" : isAfternoon ? "Afternoon push —" : "Evening hours —";
   const firstName = userName ? userName.split(" ")[0] : "user";
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const dayName = dayNames[new Date().getDay()];
+  const formattedDay = dayName === "Wednesday" ? "wednessday" : dayName.toLowerCase();
 
-  return (
-    <section className="gv-section" style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.3s", height: "auto", maxHeight: "none", flex: "none", width: "100%", paddingBottom: "12px", paddingTop: "12px" }}>
-      <div className="gv-g1-bg" />
-      <div className="gv-g1-sun" />
-      <div className="gv-inner">
-        <h1 className="gv-g1-headline gv-stagger-2" style={{ fontSize: "clamp(26px, 5vw, 36px)", lineHeight: "1.3" }}>
-          {headline}<br />
-          <span className="gv-g1-highlight" style={{ fontSize: "clamp(26px, 5vw, 36px)" }}>what are we building</span><br />
-          today?
-        </h1>
-        <p className="gv-g1-sub gv-stagger-3" style={{ fontSize: "20px", fontWeight: "bold", textTransform: "lowercase", marginTop: "16px" }}>
-          {tag.toLowerCase()} {firstName.toLowerCase()} - happy {dayName.toLowerCase()}
-        </p>
-      </div>
-    </section>
-  );
-}
-
-// GREETING 2 — Late Night
-function getSlotConfig(hour: number) {
-  if (hour < 5) return {
-    accent: "#a78bfa", accentDim: "rgba(167,139,250,0.12)", accentGlow: "rgba(167,139,250,0.06)", starCount: 28,
-  };
-  if (hour >= 22) return {
-    accent: "#60a5fa", accentDim: "rgba(96,165,250,0.12)", accentGlow: "rgba(96,165,250,0.06)", starCount: 18,
-  };
-  return {
-    accent: "#fb923c", accentDim: "rgba(251,146,60,0.12)", accentGlow: "rgba(251,146,60,0.06)", starCount: 10,
-  };
-}
-
-export function Greeting2({ userName, data, onSend }: { userName?: string; data?: any; onSend?: (t: string) => void }) {
-  const [hour, setHour] = useState(12);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setHour(new Date().getHours());
-    const t = setTimeout(() => setMounted(true), 60);
-    return () => clearTimeout(t);
-  }, []);
-
-  const cfg = getSlotConfig(hour);
-  const firstName = userName ? userName.split(" ")[0] : "user";
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayName = dayNames[new Date().getDay()];
-  const timeGreeting = hour < 5 ? "Late night" : hour < 12 ? "Good morning" : hour < 16 ? "Good afternoon" : hour < 21 ? "Good evening" : "Late night";
+  const greetingLine = `${timeCtx.greeting}, happy ${formattedDay} ${firstName}`;
 
   return (
     <>
       <style>{`
-        @keyframes ln-twinkle { 0%, 100% { opacity: var(--op, 0.3); transform: scale(1); } 50% { opacity: calc(var(--op, 0.3) * 1.8); transform: scale(1.4); } }
-        @keyframes ln-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes ln-pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.9); opacity: 0; } }
-        @keyframes ln-breathe { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.85; } }
+        .welcome {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 20px 20px 32px;
+          animation: welcomeIn 0.55s ease both;
+          width: 100%;
+          max-width: 720px;
+          align-self: center;
+        }
+
+        .welcome-icon-wrap {
+          position: relative;
+          margin-bottom: 22px;
+        }
+
+        .welcome-ring {
+          width: 72px;
+          height: 72px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 30px;
+          position: relative;
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          cursor: default;
+        }
+
+        .welcome-ring::before {
+          content: '';
+          position: absolute;
+          inset: -3px;
+          border-radius: 50%;
+          background: conic-gradient(from 0deg, var(--ring-from), var(--ring-to), var(--ring-from));
+          opacity: 0.25;
+          animation: spin 8s linear infinite;
+        }
+
+        .welcome-ring:hover {
+          transform: scale(1.08) rotate(5deg);
+        }
+
+        .meal-badge {
+          position: absolute;
+          bottom: -6px;
+          right: -10px;
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 99px;
+          padding: 3px 9px;
+          font-size: 11px;
+          font-weight: 500;
+          color: var(--text-2);
+          white-space: nowrap;
+          box-shadow: var(--shadow-sm);
+          animation: badgePop 0.5s 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes badgePop {
+          from { opacity: 0; transform: scale(0.7) translateY(4px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        @keyframes welcomeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+
+        .welcome-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          justify-content: center;
+          max-width: 560px;
+          animation: welcomeIn 0.55s 0.2s ease both;
+          margin-top: 24px;
+        }
+
+        .welcome-chip {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          font-family: var(--font-body);
+          font-size: 13px;
+          color: var(--text-2);
+          transition: all 0.2s ease;
+          box-shadow: var(--shadow-sm);
+          white-space: nowrap;
+        }
+
+        .welcome-chip:hover {
+          border-color: var(--accent);
+          color: var(--accent);
+          background: var(--accent-subtle);
+          transform: translateY(-1px);
+        }
+
+        .welcome-chip-icon {
+          font-size: 14px;
+        }
       `}</style>
-      <div 
-        ref={(el) => {
-          if (el) {
-            el.style.setProperty('--ln-accent', cfg.accent);
-            el.style.setProperty('--ln-accent-dim', cfg.accentDim);
-            el.style.setProperty('--ln-accent-glow', cfg.accentGlow);
-          }
-        }}
-        style={{ position: "relative", borderRadius: 20, border: `1px solid ${cfg.accentDim}`, background: "var(--bg, #0d0d0f)", padding: "36px 32px 16px", overflow: "hidden", opacity: mounted ? 1 : 0, transform: mounted ? "translateY(0)" : "translateY(8px)", transition: "opacity 0.5s ease, transform 0.5s ease", width: "100%", boxSizing: "border-box" }}
-      >
-        {/* Simple Starfield */}
-        <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", borderRadius: "inherit" }}>
-          {Array.from({ length: cfg.starCount }).map((_, i) => (
-            <span key={i} style={{ position: "absolute", left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, width: Math.random() * 1.5 + 0.5, height: Math.random() * 1.5 + 0.5, borderRadius: "50%", background: cfg.accent, opacity: Math.random() * 0.6 + 0.4, animation: `ln-twinkle ${Math.random() * 3 + 2}s ${Math.random() * 4}s ease-in-out infinite` }} />
-          ))}
+
+      <div className="welcome">
+        <div className="welcome-icon-wrap">
+          <div
+            className="welcome-ring"
+            style={{
+              // @ts-ignore
+              "--ring-from": pal.gradFrom,
+              "--ring-to": pal.gradTo,
+              background: `linear-gradient(135deg, ${pal.gradFrom}, ${pal.gradTo})`,
+            }}
+          >
+            <span role="img" aria-label="time icon">{timeCtx.icon}</span>
+          </div>
+          {timeCtx.mealTag && (
+            <div className="meal-badge">{timeCtx.mealTag}</div>
+          )}
         </div>
 
-        {/* Ambient Glow */}
-        <div aria-hidden="true" style={{ position: "absolute", top: -80, right: -80, width: 300, height: 300, borderRadius: "50%", background: cfg.accent, opacity: 0.15, filter: "blur(60px)", pointerEvents: "none" }} />
-        
-        <div style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 18, animation: "ln-fade-up 0.5s 0.1s both ease" }}>
-          <span aria-hidden="true" style={{ position: "absolute", inset: -10, borderRadius: "50%", border: `1px solid ${cfg.accent}`, opacity: 0.6, animation: "ln-pulse-ring 2.5s ease-out infinite" }} />
-          <span style={{ fontSize: 36, lineHeight: 1 }}>{data?.emoji || "🌙"}</span>
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(24px, 4.5vw, 42px)",
+            fontWeight: 400,
+            color: "var(--text)",
+            marginBottom: 8,
+            letterSpacing: "-0.025em",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            width: "100%",
+            textAlign: "center",
+          }}
+        >
+          {greetingLine}
+        </h1>
+        <p
+          className="welcome-sub"
+          style={{
+            fontSize: "14px",
+            color: "var(--text-2)",
+            maxWidth: "480px",
+            lineHeight: "1.65",
+            margin: "0 auto",
+          }}
+        >
+          {timeCtx.subline}
+        </p>
+
+        <div className="welcome-chips" role="list">
+          {chips.map((chip, i) => (
+            <button
+              key={i}
+              className="welcome-chip"
+              role="listitem"
+              onClick={() => onSend?.(chip.label)}
+            >
+              <span className="welcome-chip-icon" aria-hidden="true">{chip.icon}</span>
+              {chip.label}
+            </button>
+          ))}
         </div>
-        <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "var(--text, #e8e6df)", margin: "0 0 8px", letterSpacing: "-0.02em", animation: "ln-fade-up 0.5s 0.18s both ease", textTransform: "lowercase" }}>
-          {timeGreeting.toLowerCase()} {firstName.toLowerCase()} - happy {dayName.toLowerCase()}
-        </h2>
-        <p style={{ fontSize: 13.5, color: "var(--text-muted, #888)", margin: "0 0 12px", lineHeight: 1.6, animation: "ln-fade-up 0.5s 0.26s both ease" }}>
-          Ready for another deep work session? Let's explore together.
-        </p>
-        
-        <p style={{ position: "absolute", bottom: 12, right: 18, fontSize: 10, color: cfg.accent, opacity: 0.6, margin: 0, letterSpacing: "0.08em", fontVariantNumeric: "tabular-nums", animation: "ln-breathe 4s ease-in-out infinite" }}>
-          {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </p>
       </div>
     </>
   );
 }
 
-// GREETING 3 — Typewriter, warm paper tone with day/time context
+/* ─────────────────────────────────────────────────────────────
+   INDIVIDUAL WRAPPERS FOR PRESERVING COMPATIBILITY
+   ───────────────────────────────────────────────────────────── */
+export function Greeting1({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
+  return <WelcomeScreen userName={userName} onSend={onSend} />;
+}
+
+export function Greeting2({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
+  return <WelcomeScreen userName={userName} onSend={onSend} />;
+}
+
 export function Greeting3({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
-  const phrases = ["explore together...?", "write today...?", "research today...?", "create next...?"];
-  const [idx, setIdx] = useState(0);
-  const { shown: typed, done } = useTypewriter(phrases[idx], 90, 400);
-
-  useEffect(() => {
-    const t = setTimeout(() => setIdx(i => (i + 1) % phrases.length), 4000);
-    return () => clearTimeout(t);
-  }, [idx]);
-
-  // Day + time context
-  const now = new Date();
-  const h = now.getHours();
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayName = dayNames[now.getDay()];
-  const timeGreeting = h < 5 ? "Late night" : h < 12 ? "Good morning" : h < 16 ? "Good afternoon" : h < 21 ? "Good evening" : "Late night";
-  const firstName = userName ? userName.split(" ")[0] : "user";
-
-  return (
-    <section className="gv-section gv-g3-section" style={{ height: "auto", maxHeight: "none", flex: "none", width: "100%", paddingBottom: "12px", paddingTop: "12px" }}>
-      <div className="gv-g3-bg" />
-      <div className="gv-inner">
-        <h1 className="gv-g3-headline gv-stagger-2" style={{ fontSize: "clamp(26px, 5vw, 36px)", lineHeight: "1.3" }}>
-          What should we<br />
-          <span className="gv-g3-typed" key={idx} style={{ fontSize: "clamp(26px, 5vw, 36px)" }}>{typed}</span>
-        </h1>
-        <p className="gv-g3-sub gv-stagger-3" style={{ fontSize: "20px", fontWeight: "bold", textTransform: "lowercase", marginTop: "16px" }}>
-          {timeGreeting.toLowerCase()} {firstName.toLowerCase()} - happy {dayName.toLowerCase()}
-        </p>
-      </div>
-    </section>
-  );
+  return <WelcomeScreen userName={userName} onSend={onSend} />;
 }
 
-// GREETING 5 — High energy Monday
 export function Greeting5({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
-  const firstName = userName ? userName.split(" ")[0] : "user";
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayName = dayNames[new Date().getDay()];
-  const h = new Date().getHours();
-  const timeGreeting = h < 5 ? "Late night" : h < 12 ? "Good morning" : h < 16 ? "Good afternoon" : h < 21 ? "Good evening" : "Late night";
-
-  return (
-    <section className="gv-section" style={{ height: "auto", maxHeight: "none", flex: "none", width: "100%", paddingBottom: "12px", paddingTop: "12px" }}>
-      <div className="gv-g5-bg">
-        <div className="gv-g5-orb" style={{ width: 320, height: 320, top: -80, left: -80, background: "rgba(124,58,237,.15)" }} />
-        <div className="gv-g5-orb" style={{ width: 240, height: 240, bottom: -60, right: -60, background: "rgba(59,130,246,.1)" }} />
-      </div>
-      <div className="gv-inner">
-        <div className="gv-g5-badge gv-stagger-1">
-          <span className="gv-g5-pulse" />
-          Monday — let&apos;s go
-        </div>
-        <h1 className="gv-stagger-2" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-          <span className="gv-g5-headline" style={{ fontSize: "clamp(26px, 5vw, 36px)", lineHeight: "1.3" }}>New week,</span>
-          <span className="gv-g5-outline" style={{ fontSize: "clamp(26px, 5vw, 36px)", lineHeight: "1.3" }}>new ideas,</span>
-          <span className="gv-g5-headline" style={{ fontSize: "clamp(26px, 5vw, 36px)", lineHeight: "1.3" }}>big moves.</span>
-        </h1>
-        <p className="gv-g5-sub gv-stagger-3" style={{ fontSize: "20px", fontWeight: "bold", textTransform: "lowercase", marginTop: "16px" }}>
-          {timeGreeting.toLowerCase()} {firstName.toLowerCase()} - happy {dayName.toLowerCase()}
-        </p>
-      </div>
-    </section>
-  );
+  return <WelcomeScreen userName={userName} onSend={onSend} />;
 }
 
-// GREETING 6 — Friday / weekend sparkle
 export function Greeting6({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
-  const sparkles = [
-    { top: "15%", left: "72%", delay: "0s" },
-    { top: "30%", left: "85%", delay: ".3s" },
-    { top: "55%", left: "78%", delay: ".6s" },
-    { top: "20%", left: "60%", delay: ".9s" },
-    { top: "65%", left: "88%", delay: ".2s" },
-  ];
-  const firstName = userName ? userName.split(" ")[0] : "user";
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayName = dayNames[new Date().getDay()];
-  const h = new Date().getHours();
-  const timeGreeting = h < 5 ? "Late night" : h < 12 ? "Good morning" : h < 16 ? "Good afternoon" : h < 21 ? "Good evening" : "Late night";
-
-  return (
-    <section className="gv-section" style={{ height: "auto", maxHeight: "none", flex: "none", width: "100%", paddingBottom: "12px", paddingTop: "12px" }}>
-      <div className="gv-g6-bg" />
-      {sparkles.map((s, i) => (
-        <div key={i} className="gv-g6-sparkle" style={{ top: s.top, left: s.left, animationDelay: s.delay }}>✦</div>
-      ))}
-      <div className="gv-inner">
-        <h1 className="gv-g6-headline gv-stagger-2" style={{ fontSize: "clamp(26px, 5vw, 36px)", lineHeight: "1.3" }}>
-          You made it to Friday{" "}
-          <span className="gv-g6-emoji">🎉</span><br />
-          <span style={{ fontStyle: "italic", color: "#86efac" }}>Let&apos;s finish strong.</span>
-        </h1>
-        <p className="gv-g6-sub gv-stagger-3" style={{ fontSize: "20px", fontWeight: "bold", textTransform: "lowercase", marginTop: "16px" }}>
-          {timeGreeting.toLowerCase()} {firstName.toLowerCase()} - happy {dayName.toLowerCase()}
-        </p>
-      </div>
-    </section>
-  );
+  return <WelcomeScreen userName={userName} onSend={onSend} />;
 }
 
-// GREETING 7 — Zen / minimal, light theme
 export function Greeting7({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
-  const time = useClock();
-  const fmt = time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  const firstName = userName ? userName.split(" ")[0] : "user";
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayName = dayNames[new Date().getDay()];
-  const h = new Date().getHours();
-  const timeGreeting = h < 5 ? "Late night" : h < 12 ? "Good morning" : h < 16 ? "Good afternoon" : h < 21 ? "Good evening" : "Late night";
-
-  return (
-    <section className="gv-section gv-g7-section" style={{ height: "auto", maxHeight: "none", flex: "none", width: "100%", paddingBottom: "12px", paddingTop: "12px" }}>
-      <div className="gv-g7-bg" />
-      <div className="gv-inner">
-        <div style={{ fontSize: 11, color: "var(--text-dim)", letterSpacing: ".1em", marginBottom: 24, fontVariantNumeric: "tabular-nums" }} className="gv-stagger-1">
-          {fmt}
-        </div>
-        <h1 className="gv-g7-headline gv-stagger-2" style={{ fontSize: "clamp(26px, 5vw, 36px)", lineHeight: "1.3" }}>
-          Hello.<br />
-          What would you like<br />
-          to explore today?
-        </h1>
-        <div className="gv-g7-rule gv-stagger-3" />
-        <p className="gv-g7-sub gv-stagger-4" style={{ fontSize: "20px", fontWeight: "bold", textTransform: "lowercase", marginTop: "16px" }}>
-          {timeGreeting.toLowerCase()} {firstName.toLowerCase()} - happy {dayName.toLowerCase()}
-        </p>
-      </div>
-    </section>
-  );
+  return <WelcomeScreen userName={userName} onSend={onSend} />;
 }
 
-// GREETING 8 — Productivity / Focus mode with live clock
 export function Greeting8({ userName, onSend }: { userName?: string; onSend?: (t: string) => void }) {
-  const time = useClock();
-  const h = time.getHours();
-  const dayProgress = Math.round(((h * 60 + time.getMinutes()) / (24 * 60)) * 100);
-  const firstName = userName ? userName.split(" ")[0] : "user";
-  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayName = dayNames[new Date().getDay()];
-  const timeGreeting = h < 5 ? "Late night" : h < 12 ? "Good morning" : h < 16 ? "Good afternoon" : h < 21 ? "Good evening" : "Late night";
-
-  return (
-    <section className="gv-section" style={{ height: "auto", maxHeight: "none", flex: "none", width: "100%", paddingBottom: "12px", paddingTop: "12px" }}>
-      <div className="gv-g8-bg"><div className="gv-g8-grid" /></div>
-      <div className="gv-inner">
-        <div className="gv-g8-tag gv-stagger-1">
-          <div className="gv-g8-line" />
-          Focus mode
-          <div className="gv-g8-line" />
-        </div>
-        <h1 className="gv-g8-headline gv-stagger-2" style={{ fontSize: "clamp(26px, 5vw, 36px)", lineHeight: "1.2" }}>
-          {h < 12 ? "Morning briefing." : h < 17 ? "Afternoon deep work." : "Evening wind-down."}
-        </h1>
-        <p className="gv-g8-sub gv-stagger-3" style={{ fontSize: "20px", fontWeight: "bold", textTransform: "lowercase", marginTop: "16px" }}>
-          {timeGreeting.toLowerCase()} {firstName.toLowerCase()} - happy {dayName.toLowerCase()}
-        </p>
-        <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "wrap" }} className="gv-stagger-4">
-          {[
-            { val: `${dayProgress}%`, lbl: "Day progress" },
-            { val: `${24 - h}h`, lbl: "Hours left" },
-            { val: time.toLocaleDateString([], { weekday: "short" }), lbl: "Today" },
-          ].map(s => (
-            <div key={s.lbl} className="gv-g8-stat">
-              <span className="gv-g8-stat-val">{s.val}</span>
-              <span className="gv-g8-stat-lbl">{s.lbl}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <WelcomeScreen userName={userName} onSend={onSend} />;
 }
 
 // Greeting map for easy lookup
@@ -335,7 +434,6 @@ export const GREETING_VARIANTS = [
 
 /** Rotate greeting template by day of the week */
 export function pickGreeting(): typeof GREETING_VARIANTS[number] {
-  // Enforce Late Night Greeting (Greeting2) if the hour is before 8am or after 10pm
   const h = new Date().getHours();
   if (h < 8 || h >= 22) {
     return GREETING_VARIANTS[1];
@@ -348,7 +446,7 @@ export function pickGreeting(): typeof GREETING_VARIANTS[number] {
     1: 3, // Monday    → Monday Energy
     2: 6, // Tuesday   → Focus
     3: 2, // Wednesday → Typewriter
-    4: 2, // Thursday  → Typewriter (replaced Rainy)
+    4: 2, // Thursday  → Typewriter
     5: 4, // Friday    → Friday Sparkle
     6: 0, // Saturday  → Morning Sunrise
   };

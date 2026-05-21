@@ -200,22 +200,18 @@ export interface TabItem { id: string; label: string; content: string; }
 export interface TabbedResponseProps { tabs: TabItem[]; }
 
 export function TabbedResponse({ tabs }: TabbedResponseProps) {
-  // Defensive: normalize tabs array
-  const safeTabs = (Array.isArray(tabs) ? tabs : []).filter(
-    (t): t is TabItem => t != null && typeof t === "object" && typeof t.id === "string"
-  );
-  const [active, setActive] = useState(safeTabs[0]?.id || "");
-  const tab = safeTabs.find(t => t.id === active) || safeTabs[0];
+  const [active, setActive] = useState(tabs[0]?.id || "");
+  const tab = tabs.find(t => t.id === active) || tabs[0];
   
-  if (safeTabs.length === 0) return null;
+  if (!tabs || tabs.length === 0) return null;
 
   return (
     <div className="im-card">
       <div className="im-msg-header"><span className="im-msg-header-dot" /> Jessica</div>
       <div className="im-tab-bar">
-        {safeTabs.map(t => (
+        {tabs.map(t => (
           <button key={t.id} className={`im-tab-btn ${active === t.id ? "active" : ""}`} onClick={() => setActive(t.id)}>
-            {t.label || t.id}
+            {t.label}
           </button>
         ))}
       </div>
@@ -224,7 +220,7 @@ export function TabbedResponse({ tabs }: TabbedResponseProps) {
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeKatex]}
         >
-          {tab?.content || ""}
+          {tab.content}
         </ReactMarkdown>
       </div>
     </div>
@@ -317,12 +313,7 @@ export interface StepByStepProps { title?: string; steps: StepItem[]; }
 export function StepByStep({ title = "Here's my recommended approach — click a step to focus it:", steps }: StepByStepProps) {
   const [activeStep, setActiveStep] = useState(0);
   
-  // Defensive: normalize steps array
-  const safeSteps = (Array.isArray(steps) ? steps : []).filter(
-    (s): s is StepItem => s != null && typeof s === "object" && typeof s.title === "string"
-  );
-
-  if (safeSteps.length === 0) return null;
+  if (!steps || steps.length === 0) return null;
 
   return (
     <div className="im-card">
@@ -331,7 +322,7 @@ export function StepByStep({ title = "Here's my recommended approach — click a
         {title}
       </div>
       <div className="im-steps-list">
-        {safeSteps.map((s, i) => {
+        {steps.map((s, i) => {
           const state = i < activeStep ? "done" : i === activeStep ? "active" : "idle";
           return (
             <div key={i} className="im-step-row" onClick={() => setActiveStep(i)} style={{ cursor: "pointer" }}>
@@ -339,7 +330,7 @@ export function StepByStep({ title = "Here's my recommended approach — click a
                 <div className={`im-step-num ${state}`}>
                   {state === "done" ? <CheckIcon size={12} /> : i + 1}
                 </div>
-                {i < safeSteps.length - 1 && <div className="im-step-line" />}
+                {i < steps.length - 1 && <div className="im-step-line" />}
               </div>
               <div className="im-step-content">
                 <div className="im-step-title" style={{ color: state === "active" ? "var(--text)" : state === "done" ? "var(--green)" : "var(--text-muted)" }}>
@@ -348,7 +339,7 @@ export function StepByStep({ title = "Here's my recommended approach — click a
                 {state === "active" && (
                   <div className="im-step-desc im-fade-in">
                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {s.desc || ""}
+                      {s.desc}
                     </ReactMarkdown>
                   </div>
                 )}

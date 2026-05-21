@@ -19,6 +19,8 @@ interface SidebarProps {
   onClose?: () => void;
   isCollapsed?: boolean;
   onToggle?: () => void;
+  userName?: string;
+  userEmail?: string;
 }
 
 const SUGGESTIONS = [
@@ -126,10 +128,12 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
 
 // ── Main Sidebar ──────────────────────────────────────────────
 export default function Sidebar({
-  threads, activeThreadId, onSelectThread, onNewThread, onDeleteThread, onClose, isCollapsed, onToggle
+  threads, activeThreadId, onSelectThread, onNewThread, onDeleteThread, onClose, isCollapsed, onToggle,
+  userName, userEmail
 }: SidebarProps) {
   const [hoveredId, setHoveredId]       = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [userRowHover, setUserRowHover]   = useState(false);
   const { theme, toggle }               = useTheme();
   const isDark = theme === "dark";
   const groups = groupThreads(threads);
@@ -324,32 +328,27 @@ export default function Sidebar({
           <button
             onClick={onNewThread}
             style={{
-              width: "100%", display: "flex", alignItems: "center", gap: 8,
-              padding: "8px 12px", borderRadius: 8,
-              background: "var(--surface-2)",
-              border: "1px solid var(--border)",
-              cursor: "pointer", fontSize: 13.5, fontWeight: 500,
-              color: "var(--text-2)", fontFamily: "var(--font-body)",
-              transition: "background 0.12s, border-color 0.12s, color 0.12s",
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+              padding: "8px 12px", borderRadius: "var(--radius-xs)",
+              background: "var(--accent)",
+              border: "none",
+              cursor: "pointer", fontSize: 13, fontWeight: 500,
+              color: "#fff", fontFamily: "var(--font-body)",
+              transition: "background var(--t) var(--ease), transform 0.15s var(--spring), box-shadow var(--t)",
+              boxShadow: "0 1px 3px var(--brand-glow)",
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.background = "var(--surface-active)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text)";
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--border-2)";
+              (e.currentTarget as HTMLElement).style.background = "var(--accent-hover)";
+              (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 3px 8px var(--brand-glow)";
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.background = "var(--surface-2)";
-              (e.currentTarget as HTMLElement).style.color = "var(--text-2)";
-              (e.currentTarget as HTMLElement).style.borderColor = "var(--border)";
+              (e.currentTarget as HTMLElement).style.background = "var(--accent)";
+              (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 3px var(--brand-glow)";
             }}
           >
-            <div style={{
-              width: 20, height: 20, borderRadius: 5,
-              background: "var(--accent)", display: "flex",
-              alignItems: "center", justifyContent: "center", flexShrink: 0,
-            }}>
-              <Plus size={12} color="white" strokeWidth={2.5} />
-            </div>
+            <Plus size={13} color="white" strokeWidth={2.5} style={{ flexShrink: 0 }} />
             New conversation
           </button>
         </div>
@@ -392,16 +391,80 @@ export default function Sidebar({
         </div>
 
         {/* ── Divider ── */}
-        <div style={{ height: 1, background: "var(--border)", margin: "0 10px 6px" }} />
+        <div style={{ height: 1, background: "var(--border)", margin: "0 10px 8px" }} />
 
         {/* ── Footer ── */}
-        <div style={{ padding: "4px 10px 12px", display: "flex", flexDirection: "column", gap: 1 }}>
-          <FooterBtn icon={<Settings size={15} />} label="Settings"     onClick={() => setShowSettings(true)} />
-          <FooterBtn
-            icon={isDark ? <Sun size={15} /> : <Moon size={15} />}
-            label={isDark ? "Light mode" : "Dark mode"}
-            onClick={toggle}
-          />
+        <div style={{ padding: "4px 10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 10px",
+              borderRadius: "var(--radius-md)",
+              cursor: "pointer",
+              background: userRowHover ? "var(--surface-hover)" : "transparent",
+              transition: "background var(--t)",
+              marginBottom: 4,
+            }}
+            onMouseEnter={() => setUserRowHover(true)}
+            onMouseLeave={() => setUserRowHover(false)}
+            onClick={() => setShowSettings(true)}
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, var(--accent, #C96442), #F59E0B)",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 13,
+                fontWeight: 600,
+                flexShrink: 0,
+                boxShadow: "0 2px 6px var(--brand-glow)",
+              }}
+            >
+              {userName ? userName.charAt(0).toUpperCase() : "U"}
+            </div>
+            <div style={{ overflow: "hidden", minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--text)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {userName || "You"}
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "var(--text-muted)",
+                  marginTop: 1,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {userEmail || "Deep Researcher"}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <FooterBtn icon={<Settings size={15} />} label="Settings"     onClick={() => setShowSettings(true)} />
+            <FooterBtn
+              icon={isDark ? <Sun size={15} /> : <Moon size={15} />}
+              label={isDark ? "Light mode" : "Dark mode"}
+              onClick={toggle}
+            />
+          </div>
         </div>
       </aside>
 

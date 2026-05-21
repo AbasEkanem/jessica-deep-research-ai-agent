@@ -228,6 +228,8 @@ export default function HomePage() {
           onDeleteThread={handleDeleteThread}
           onClose={() => setSidebarOpen(false)}
           onToggle={() => setSidebarOpen(v => !v)}
+          userName={userName}
+          userEmail={userEmail}
         />
       </div>
 
