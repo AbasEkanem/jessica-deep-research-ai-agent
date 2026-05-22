@@ -53,6 +53,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
                 app.state.agent = get_jessica_agent(checkpointer, memory_store)
                 app.state.memory_store = memory_store
                 print(f"[OK] Agent initialized - Persistent Postgres memory active", flush=True)
+                
+                # Start the background email worker thread
+                import threading
+                from email_worker import start_worker
+                worker_thread = threading.Thread(target=start_worker, daemon=True)
+                worker_thread.start()
+                print("[OK] Background email worker thread started.", flush=True)
+                
                 yield
     except Exception as e:
         print(f"[WARN] Could not connect to Postgres: {e}", flush=True)

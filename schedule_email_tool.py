@@ -59,8 +59,9 @@ def schedule_research_email(
                     
             scheduled_dt = datetime.fromisoformat(clean_time)
             
-            # Now it is guaranteed naive. Assume local system time:
-            scheduled_dt = scheduled_dt.astimezone()
+            # Now it is guaranteed naive. Assume Nigeria (UTC+1) timezone:
+            nigeria_tz = timezone(timedelta(hours=1))
+            scheduled_dt = scheduled_dt.replace(tzinfo=nigeria_tz)
             
             # Convert explicitly to UTC for Supabase
             target_time = scheduled_dt.astimezone(timezone.utc).isoformat()
