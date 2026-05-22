@@ -303,8 +303,9 @@ async def ask(http_request: Request, body: StoryRequest):
     async def run_agent_in_background():
         handler = JessicaStatusHandler(queue)
         try:
-            from datetime import datetime
-            current_time_str = datetime.now().strftime("%A, %B %d, %Y - %I:%M %p")
+            from datetime import datetime, timezone, timedelta
+            nigeria_tz = timezone(timedelta(hours=1))
+            current_time_str = datetime.now(nigeria_tz).strftime("%A, %B %d, %Y - %I:%M %p")
             enriched_message = f"[SYSTEM CONTEXT: The current exact date and time is {current_time_str}]\n\n{body.message}"
 
             # Run the agent to full completion — no streaming, no deadlock
