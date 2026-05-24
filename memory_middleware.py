@@ -27,11 +27,21 @@ class AutoMemoryMiddleware(AgentMiddleware):
         # We only want to search memory for User messages
         if latest_msg.type == "human" and isinstance(latest_msg.content, str):
             user_query = latest_msg.content
+            # Extract user_id from the LangGraph runnable config
+            from langchain_core.runnables.config import ensure_config
+            try:
+                config = ensure_config()
+                user_id = config.get("configurable", {}).get("user_id", "default")
+            except Exception:
+                user_id = "default"
+            
+            # Construct the user-scoped namespace (e.g. ("jessica_memory_store", "jerome"))
+            active_namespace = self.namespace + (user_id,)
             
             # 2. Search the LangGraph BaseStore
             try:
                 memories = await self.store.asearch(
-                    self.namespace,
+                    active_namespace,
                     query=user_query,
                     limit=5
                 )

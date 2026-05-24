@@ -96,6 +96,7 @@ class StoryRequest(BaseModel):
     message: str
     thread_id: str = "default"
     user_id: str = "default"
+    user_name: str = "User"
 
 
     @field_validator("message")
@@ -306,7 +307,11 @@ async def ask(http_request: Request, body: StoryRequest):
             from datetime import datetime, timezone, timedelta
             nigeria_tz = timezone(timedelta(hours=1))
             current_time_str = datetime.now(nigeria_tz).strftime("%A, %B %d, %Y - %I:%M %p")
-            enriched_message = f"[SYSTEM CONTEXT: The current exact date and time is {current_time_str}]\n\n{body.message}"
+            enriched_message = (
+                f"[SYSTEM CONTEXT: The current exact date and time is {current_time_str}. "
+                f"The logged-in user is {body.user_name}. Always refer to them as {body.user_name} if you address them.]\n\n"
+                f"{body.message}"
+            )
 
             # Run the agent to full completion — no streaming, no deadlock
             result = await agent.ainvoke(

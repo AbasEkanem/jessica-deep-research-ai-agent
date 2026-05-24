@@ -1,10 +1,10 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import {
   Plus, MessageSquare, Trash2, X, Sun, Moon,
   Sparkles, BrainCircuit, Globe, Mail,
-  FlaskConical, FileText, Settings, Zap, PenSquare
+  FlaskConical, FileText, Settings, Zap, PenSquare,
+  Search, LayoutGrid, History
 } from "lucide-react";
 import { Thread } from "@/types/chat";
 import { useTheme } from "@/context/ThemeContext";
@@ -35,7 +35,6 @@ function groupThreads(threads: Thread[]) {
   const today: Thread[] = [], yesterday: Thread[] = [],
         thisWeek: Thread[] = [], older: Thread[] = [];
   const now = Date.now(), DAY = 86_400_000;
-
   threads.forEach((t) => {
     const age = now - t.timestamp;
     if      (age < DAY)     today.push(t);
@@ -48,17 +47,14 @@ function groupThreads(threads: Thread[]) {
 
 function SettingsModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
-
   useEffect(() => {
     setEmail(localStorage.getItem("jessica_user_email") || "");
   }, []);
-
   const handleSave = () => {
     localStorage.setItem("jessica_user_email", email.trim());
     window.dispatchEvent(new Event("jessica-settings-updated"));
     onClose();
   };
-
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 100,
@@ -78,7 +74,6 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
         <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 20, fontFamily: "var(--font-body)" }}>
           Configure your preferences
         </p>
-
         <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "var(--text-2)", marginBottom: 6, fontFamily: "var(--font-body)", letterSpacing: "0.01em" }}>
           Email Address
         </label>
@@ -100,7 +95,6 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
           onFocus={e => (e.target.style.borderColor = "var(--accent)")}
           onBlur={e  => (e.target.style.borderColor = "var(--border-2)")}
         />
-
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{
             padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500,
@@ -142,18 +136,15 @@ export default function Sidebar({
     if (items.length === 0) return null;
     return (
       <div key={label} style={{ marginBottom: 16 }}>
-        {/* Group label */}
         <p style={{
           fontSize: 11, fontWeight: 500, letterSpacing: "0.04em",
           textTransform: "uppercase", color: "var(--text-dim)",
           padding: "0 12px", marginBottom: 2,
           fontFamily: "var(--font-body)",
         }}>{label}</p>
-
         {items.map((thread) => {
           const isActive  = activeThreadId === thread.id;
           const isHovered = hoveredId === thread.id;
-
           return (
             <div
               key={thread.id}
@@ -173,7 +164,6 @@ export default function Sidebar({
                   paddingRight: isHovered ? 36 : 12,
                 }}
               >
-                {/* Subtle left indicator for active */}
                 {isActive && (
                   <span style={{
                     width: 3, height: 14, borderRadius: 2,
@@ -194,8 +184,6 @@ export default function Sidebar({
                   fontFamily: "var(--font-body)",
                 }}>{thread.title}</span>
               </button>
-
-              {/* Delete button — appears on hover */}
               {isHovered && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onDeleteThread(thread.id); }}
@@ -226,7 +214,7 @@ export default function Sidebar({
     );
   };
 
-  // ── Collapsed state ──
+  // ── Collapsed state — Gemini icon strip (gemini_ui.png) ──────
   if (isCollapsed) {
     return (
       <>
@@ -253,17 +241,35 @@ export default function Sidebar({
               }}
             />
           </div>
-
-          {/* New chat */}
+          {/* Top icons: pen, search, grid */}
           <IconBtn title="New chat" onClick={onNewThread}>
             <PenSquare size={16} />
+          </IconBtn>
+          <IconBtn title="Search chats" onClick={() => {}}>
+            <Search size={16} />
+          </IconBtn>
+          <IconBtn title="Library" onClick={() => {}}>
+            <LayoutGrid size={16} />
           </IconBtn>
 
           <div style={{ flex: 1 }} />
 
-          <IconBtn title="Settings" onClick={() => setShowSettings(true)}>
-            <Settings size={16} />
+          {/* Bottom icons: activity, settings+dot, avatar */}
+          <IconBtn title="Activity" onClick={() => {}}>
+            <History size={16} />
           </IconBtn>
+          <div style={{ position: "relative" }}>
+            <IconBtn title="Settings" onClick={() => setShowSettings(true)}>
+              <Settings size={16} />
+            </IconBtn>
+            <span style={{
+              position: "absolute", top: 6, right: 6,
+              width: 7, height: 7, borderRadius: "50%",
+              background: "#3b82f6",
+              border: "1.5px solid var(--bg-sidebar)",
+              pointerEvents: "none",
+            }} />
+          </div>
           <IconBtn title="Toggle theme" onClick={toggle}>
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </IconBtn>
@@ -273,7 +279,7 @@ export default function Sidebar({
     );
   }
 
-  // ── Expanded state ──
+  // ── Expanded state — Gemini open sidebar (side_bar_toggled_open.png) ──
   return (
     <>
       <aside style={{
@@ -284,13 +290,13 @@ export default function Sidebar({
         height: "100%", overflow: "hidden",
       }}>
 
-        {/* ── Header ── */}
+        {/* ── Header: logo + wordmark + collapse toggle ── */}
         <div style={{
-          padding: "14px 14px 10px",
+          padding: "14px 8px 8px 16px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexShrink: 0,
         }}>
-          {/* Wordmark + logo */}
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Image
               src="/jessica-avatar.png"
               alt="Jessica"
@@ -305,18 +311,18 @@ export default function Sidebar({
               }}
             />
             <span style={{
-              fontSize: 15, fontWeight: 600, color: "var(--text)",
+              fontSize: 16, fontWeight: 600, color: "var(--text)",
               fontFamily: "var(--font-body)", letterSpacing: "-0.02em",
             }}>Jessica</span>
           </div>
-
+          {/* Panel collapse icon — □ with vertical divider, matches Gemini */}
           {onClose && (
             <button
               onClick={onClose}
               title="Close sidebar"
               style={{
                 background: "none", border: "none", cursor: "pointer",
-                padding: 5, borderRadius: 6,
+                padding: 6, borderRadius: 8,
                 color: "var(--text-dim)", display: "flex",
                 alignItems: "center", transition: "background 0.12s, color 0.12s",
               }}
@@ -329,43 +335,57 @@ export default function Sidebar({
                 e.currentTarget.style.color = "var(--text-dim)";
               }}
             >
-              <X size={16} />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="9" y1="3" x2="9" y2="21"/>
+              </svg>
             </button>
           )}
         </div>
 
-        {/* ── New chat button ── */}
-        <div style={{ padding: "0 10px 12px" }}>
+        {/* ── Nav items: New chat / Search chats / Library ── */}
+        {/* Full-width pill shape, "New chat" always has filled bg (Gemini default) */}
+        <nav style={{ padding: "2px 8px 4px", flexShrink: 0 }}>
+          {[
+            { icon: <PenSquare size={18} strokeWidth={1.8} />, label: "New chat", onClick: onNewThread, alwaysFilled: true },
+            { icon: <Search size={18} strokeWidth={1.8} />,    label: "Search chats", onClick: () => {}, alwaysFilled: false },
+            { icon: <LayoutGrid size={18} strokeWidth={1.8} />,label: "Library", onClick: () => {}, alwaysFilled: false },
+          ].map(({ icon, label, onClick, alwaysFilled }) => (
+            <GeminiNavItem key={label} icon={icon} label={label} onClick={onClick} alwaysFilled={alwaysFilled} />
+          ))}
+        </nav>
+
+        {/* ── Notebooks section ── */}
+        <div style={{ padding: "6px 8px 0", flexShrink: 0 }}>
+          <p style={{
+            fontSize: 12, color: "var(--text-dim)", fontWeight: 400,
+            fontFamily: "var(--font-body)", padding: "0 8px", marginBottom: 2,
+          }}>Notebooks</p>
           <button
-            onClick={onNewThread}
+            onClick={() => {}}
             style={{
-              width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-              padding: "8px 12px", borderRadius: "var(--radius-xs)",
-              background: "var(--accent)",
-              border: "none",
-              cursor: "pointer", fontSize: 13, fontWeight: 500,
-              color: "#fff", fontFamily: "var(--font-body)",
-              transition: "background var(--t) var(--ease), transform 0.15s var(--spring), box-shadow var(--t)",
-              boxShadow: "0 1px 3px var(--brand-glow)",
+              width: "100%", display: "flex", alignItems: "center", gap: 10,
+              padding: "8px 8px", borderRadius: 8,
+              background: "transparent", border: "none", cursor: "pointer",
+              fontSize: 13.5, color: "var(--text-2)", fontFamily: "var(--font-body)",
+              transition: "background 0.12s", textAlign: "left",
             }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.background = "var(--accent-hover)";
-              (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 3px 8px var(--brand-glow)";
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.background = "var(--accent)";
-              (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 3px var(--brand-glow)";
-            }}
+            onMouseEnter={e => (e.currentTarget.style.background = "var(--surface-hover)")}
+            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
           >
-            <Plus size={13} color="white" strokeWidth={2.5} style={{ flexShrink: 0 }} />
-            New conversation
+            <Plus size={15} strokeWidth={2} style={{ color: "var(--text-dim)", flexShrink: 0 }} />
+            New notebook
           </button>
         </div>
 
-        {/* ── Divider ── */}
-        <div style={{ height: 1, background: "var(--border)", margin: "0 10px 10px" }} />
+        {/* ── Recents label ── */}
+        <div style={{ padding: "10px 16px 4px", flexShrink: 0 }}>
+          <p style={{
+            fontSize: 12, color: "var(--text-dim)", fontWeight: 400,
+            fontFamily: "var(--font-body)",
+          }}>Recents</p>
+        </div>
 
         {/* ── Thread list ── */}
         <div
@@ -392,100 +412,194 @@ export default function Sidebar({
               </p>
             </div>
           ) : (
-            <>
-              {renderGroup("Today",     groups.today)}
-              {renderGroup("Yesterday", groups.yesterday)}
-              {renderGroup("This Week", groups.thisWeek)}
-              {renderGroup("Older",     groups.older)}
-            </>
+            /* Flat list — no time-group headers, plain text rows like Gemini */
+            threads.map((thread) => {
+              const isActive  = activeThreadId === thread.id;
+              const isHovered = hoveredId === thread.id;
+              return (
+                <div
+                  key={thread.id}
+                  style={{ position: "relative" }}
+                  onMouseEnter={() => setHoveredId(thread.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                >
+                  <button
+                    onClick={() => onSelectThread(thread.id)}
+                    style={{
+                      width: "100%", display: "flex", alignItems: "center",
+                      padding: "7px 8px", borderRadius: 8, textAlign: "left",
+                      background: isActive  ? "var(--surface-active)"  :
+                                  isHovered ? "var(--surface-hover)"    : "transparent",
+                      border: "none", cursor: "pointer",
+                      transition: "background 0.12s",
+                      paddingRight: isHovered ? 34 : 8,
+                    }}
+                  >
+                    <span style={{
+                      fontSize: 13.5,
+                      fontWeight: isActive ? 500 : 400,
+                      color: isActive ? "var(--text)" : "var(--text-2)",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1,
+                      fontFamily: "var(--font-body)",
+                    }}>{thread.title}</span>
+                  </button>
+                  {isHovered && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteThread(thread.id); }}
+                      style={{
+                        position: "absolute", right: 4, top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none", border: "none", cursor: "pointer",
+                        color: "var(--text-dim)", padding: "4px 5px",
+                        borderRadius: 5, display: "flex", alignItems: "center",
+                        transition: "color 0.12s, background 0.12s",
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.color = "#e5534b";
+                        e.currentTarget.style.background = "rgba(229,83,75,0.08)";
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.color = "var(--text-dim)";
+                        e.currentTarget.style.background = "none";
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
 
-        {/* ── Divider ── */}
-        <div style={{ height: 1, background: "var(--border)", margin: "0 10px 8px" }} />
+        {/* ── Bottom: Activity + user row ── */}
+        <div style={{ flexShrink: 0, padding: "0 8px 12px" }}>
+          {/* Activity nav item */}
+          <GeminiNavItem
+            icon={<History size={18} strokeWidth={1.8} />}
+            label="Activity"
+            onClick={() => {}}
+            alwaysFilled={false}
+          />
 
-        {/* ── Footer ── */}
-        <div style={{ padding: "4px 10px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+          {/* User row: avatar + name + settings gear with blue dot */}
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "8px 10px",
-              borderRadius: "var(--radius-md)",
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "8px 10px", borderRadius: 24,
               cursor: "pointer",
               background: userRowHover ? "var(--surface-hover)" : "transparent",
               transition: "background var(--t)",
-              marginBottom: 4,
+              marginTop: 2,
             }}
             onMouseEnter={() => setUserRowHover(true)}
             onMouseLeave={() => setUserRowHover(false)}
-            onClick={() => setShowSettings(true)}
           >
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, var(--accent, #C96442), #F59E0B)",
-                color: "#fff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 13,
-                fontWeight: 600,
-                flexShrink: 0,
-                boxShadow: "0 2px 6px var(--brand-glow)",
-              }}
-            >
+            {/* Avatar circle */}
+            <div style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "linear-gradient(135deg, var(--accent, #C96442), #F59E0B)",
+              color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 13, fontWeight: 600, flexShrink: 0,
+              boxShadow: "0 2px 6px var(--brand-glow)",
+            }}>
               {userName ? userName.charAt(0).toUpperCase() : "U"}
             </div>
+
+            {/* Name only — matches Gemini screenshot */}
             <div style={{ overflow: "hidden", minWidth: 0, flex: 1 }}>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: "var(--text)",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
+              <div style={{
+                fontSize: 13, fontWeight: 500, color: "var(--text)",
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                fontFamily: "var(--font-body)",
+              }}>
                 {userName || "You"}
               </div>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--text-muted)",
-                  marginTop: 1,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
+              <div style={{
+                fontSize: 11, color: "var(--text-muted)", marginTop: 1,
+                whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                fontFamily: "var(--font-body)",
+              }}>
                 {userEmail || "Deep Researcher"}
               </div>
             </div>
+
+            {/* Settings gear + blue dot */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <button
+                title="Settings"
+                onClick={(e) => { e.stopPropagation(); setShowSettings(true); }}
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  padding: 5, borderRadius: 7, color: "var(--text-dim)",
+                  display: "flex", alignItems: "center",
+                  transition: "background 0.12s, color 0.12s",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "var(--surface-active)";
+                  e.currentTarget.style.color = "var(--text)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "none";
+                  e.currentTarget.style.color = "var(--text-dim)";
+                }}
+              >
+                <Settings size={16} strokeWidth={1.8} />
+              </button>
+              <span style={{
+                position: "absolute", top: 4, right: 4,
+                width: 7, height: 7, borderRadius: "50%",
+                background: "#3b82f6",
+                border: "1.5px solid var(--bg-sidebar)",
+                pointerEvents: "none",
+              }} />
+            </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <FooterBtn icon={<Settings size={15} />} label="Settings"     onClick={() => setShowSettings(true)} />
-            <FooterBtn
-              icon={isDark ? <Sun size={15} /> : <Moon size={15} />}
-              label={isDark ? "Light mode" : "Dark mode"}
-              onClick={toggle}
-            />
-          </div>
+          {/* Theme toggle — kept from original */}
+          <FooterBtn
+            icon={isDark ? <Sun size={15} /> : <Moon size={15} />}
+            label={isDark ? "Light mode" : "Dark mode"}
+            onClick={toggle}
+          />
         </div>
       </aside>
-
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </>
   );
 }
 
-// ── Small helpers ─────────────────────────────────────────────
+// ── Gemini pill nav item ──────────────────────────────────────
+function GeminiNavItem({ icon, label, onClick, alwaysFilled }: {
+  icon: React.ReactNode; label: string; onClick: () => void; alwaysFilled: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: "100%", display: "flex", alignItems: "center", gap: 14,
+        padding: "10px 12px", borderRadius: 24,
+        background: alwaysFilled || hovered ? "var(--surface-hover)" : "transparent",
+        border: "none", cursor: "pointer",
+        fontSize: 14, fontWeight: alwaysFilled ? 500 : 400,
+        color: "var(--text)",
+        fontFamily: "var(--font-body)",
+        transition: "background 0.12s",
+        textAlign: "left",
+      }}
+    >
+      <span style={{ color: "var(--text-dim)", display: "flex", alignItems: "center", flexShrink: 0 }}>
+        {icon}
+      </span>
+      {label}
+    </button>
+  );
+}
 
+// ── Small helpers ─────────────────────────────────────────────
 function IconBtn({ title, onClick, children }: {
   title: string; onClick: () => void; children: React.ReactNode;
 }) {
