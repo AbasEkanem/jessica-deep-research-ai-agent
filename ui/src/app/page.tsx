@@ -1309,7 +1309,7 @@ export default function HomePage() {
           opacity: 1; pointer-events: auto;
         }
         .shimmer-line {
-          background: linear-gradient(90deg, var(--chipBg) 25%, var(--inputBg) 50%, var(--chipBg) 75%);
+          background: linear-gradient(90deg, rgba(130,130,130,0.12) 25%, rgba(130,130,130,0.35) 50%, rgba(130,130,130,0.12) 75%);
           background-size: 200% 100%;
           animation: shimmer 1.5s infinite linear;
         }
