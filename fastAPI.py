@@ -2,6 +2,7 @@ import sys
 import os
 import asyncio
 import selectors
+import re
 
 # Force UTF-8 output on Windows so emoji/Unicode in model responses don't crash
 if sys.platform == "win32":
@@ -142,6 +143,10 @@ async def get_thread_history(http_request: Request, thread_id: str):
                 role = "user" if msg_type == "human" else "jessica"
                 
                 if content and isinstance(content, str):
+                    if role == "user":
+                        # Remove the hardcoded [SYSTEM CONTEXT: ... ] block
+                        content = re.sub(r"^\[SYSTEM CONTEXT:.*?\]\s*", "", content, flags=re.IGNORECASE | re.DOTALL)
+                        
                     messages.append({
                         "role": role,
                         "content": content
