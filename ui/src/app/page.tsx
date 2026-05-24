@@ -87,8 +87,8 @@ function AsteriskLogo({ size = 52 }) {
 function SkeletonShimmer() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 300, padding: "8px 0" }}>
-      <div className="shimmer-line" style={{ width: "95%", height: 12, borderRadius: 4 }} />
-      <div className="shimmer-line" style={{ width: "80%", height: 12, borderRadius: 4 }} />
+      <div className="shimmer-line" style={{ width: "95%", height: 16, borderRadius: 4 }} />
+      <div className="shimmer-line" style={{ width: "80%", height: 14, borderRadius: 4 }} />
       <div className="shimmer-line" style={{ width: "90%", height: 12, borderRadius: 4 }} />
     </div>
   );
@@ -179,7 +179,7 @@ function Bubble({
         {isEditing && isUser ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <textarea
-              value={editText}
+              value={editText.replace(/^\[SYSTEM CONTEXT:.*?\]\s*/is, "")}
               onChange={e => setEditText(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSaveEdit(); } if (e.key === "Escape") setIsEditing(false); }}
               autoFocus
@@ -218,7 +218,7 @@ function Bubble({
             {msg.typing || (msg.isStreaming && !msg.content && !isResearch && !isUser) ? (
               <SkeletonShimmer />
             ) : isUser ? (
-              msg.content
+              msg.content.replace(/^\[SYSTEM CONTEXT:.*?\]\s*/is, "")
             ) : (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkMath]}
