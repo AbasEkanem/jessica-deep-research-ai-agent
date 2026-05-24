@@ -110,7 +110,16 @@ function ActionIcon({ type, active }: { type: string, active: boolean }) {
   const color = active ? C.accent : C.muted;
   if (type === "search") return <GlobeIcon size={13} color={color} />;
   if (type === "memory") return <span style={{ fontSize: 13, flexShrink: 0 }}>🧠</span>;
-  if (type === "email") return <span style={{ fontSize: 13, flexShrink: 0 }}>✉️</span>;
+  if (type === "email") return (
+    <svg width="13" height="13" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      <path fill="#4285F4" d="M45 16.2V38c0 2.2-1.8 4-4 4H34V18L45 16.2z"/>
+      <path fill="#34A853" d="M3 16.2V38c0 2.2 1.8 4 4 4h11V18L3 16.2z"/>
+      <path fill="#EA4335" d="M34 18V9c0-2.2-1.8-4-4-4h-12c-2.2 0-4 1.8-4 4v9h20z"/>
+      <path fill="#FBBC05" d="M34 9l-10 7.5L14 9V6c0-2.2 1.8-4 4-4h12c2.2 0 4 1.8 4 4v3z"/>
+      <path fill="#EA4335" d="M3 16.2L14 24.5V18L3 16.2z"/>
+      <path fill="#EA4335" d="M45 16.2L34 24.5V18l11-1.8z"/>
+    </svg>
+  );
   const ico = ACTION_ICONS[type] || ACTION_ICONS.think;
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -329,7 +338,20 @@ export default function AgentSearchCard({
                   paddingTop: 10, paddingBottom: 6,
                   borderTop: `1px solid ${C.cardBorder}`,
                 }}>
-                  {isMemory ? <span style={{ fontSize: 13 }}>🧠</span> : isEmail ? <span style={{ fontSize: 13 }}>✉️</span> : <GlobeIcon size={13} />}
+                  {isMemory ? (
+                    <span style={{ fontSize: 13 }}>🧠</span>
+                  ) : isEmail ? (
+                    <svg width="13" height="13" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, marginTop: 1 }}>
+                      <path fill="#4285F4" d="M45 16.2V38c0 2.2-1.8 4-4 4H34V18L45 16.2z"/>
+                      <path fill="#34A853" d="M3 16.2V38c0 2.2 1.8 4 4 4h11V18L3 16.2z"/>
+                      <path fill="#EA4335" d="M34 18V9c0-2.2-1.8-4-4-4h-12c-2.2 0-4 1.8-4 4v9h20z"/>
+                      <path fill="#FBBC05" d="M34 9l-10 7.5L14 9V6c0-2.2 1.8-4 4-4h12c2.2 0 4 1.8 4 4v3z"/>
+                      <path fill="#EA4335" d="M3 16.2L14 24.5V18L3 16.2z"/>
+                      <path fill="#EA4335" d="M45 16.2L34 24.5V18l11-1.8z"/>
+                    </svg>
+                  ) : (
+                    <GlobeIcon size={13} />
+                  )}
                   <span style={{
                     flex: 1, fontSize: 12, color: C.muted,
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
