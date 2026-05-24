@@ -83,16 +83,14 @@ function AsteriskLogo({ size = 52 }) {
     </svg>
   );
 }
-/* ── Typing dots ── */
-function TypingDots() {
+/* ── Skeleton Shimmer ── */
+function SkeletonShimmer() {
   return (
-    <span style={{ display: "inline-flex", gap: 4, alignItems: "center", padding: "2px 0" }}>
-      {[0,1,2].map(i => (
-        <span key={i} style={{ width: 6, height: 6, borderRadius: "50%",
-          background: C.muted, display: "inline-block",
-          animation: `dotBounce 1.1s ease-in-out ${i*.18}s infinite` }} />
-      ))}
-    </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 300, padding: "8px 0" }}>
+      <div className="shimmer-line" style={{ width: "95%", height: 12, borderRadius: 4 }} />
+      <div className="shimmer-line" style={{ width: "80%", height: 12, borderRadius: 4 }} />
+      <div className="shimmer-line" style={{ width: "90%", height: 12, borderRadius: 4 }} />
+    </div>
   );
 }
 /* ── Clipboard helper (safe in HTTP + HTTPS) ── */
@@ -215,10 +213,10 @@ function Bubble({
             borderRadius: isUser ? "14px 14px 4px 14px" : "0 14px 14px 14px",
             padding: isUser ? "10px 15px" : "4px 0",
             color: C.text, fontSize: 14.5, lineHeight: 1.7,
-            fontFamily: isUser ? "inherit" : "'Georgia', 'Times New Roman', serif",
+            fontFamily: "inherit",
           }}>
             {msg.typing || (msg.isStreaming && !msg.content && !isResearch && !isUser) ? (
-              <TypingDots />
+              <SkeletonShimmer />
             ) : isUser ? (
               msg.content
             ) : (
@@ -378,7 +376,7 @@ function SettingsModal({ onClose, userName, userEmail, onLogout }: { onClose: ()
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{
             padding: "7px 14px", borderRadius: 7, fontSize: 13, fontWeight: 500,
-            background: C.accent, color: "white", border: "none",
+            background: C.accent, color: "var(--bg)", border: "none",
             cursor: "pointer", fontFamily: "inherit",
             transition: "opacity 0.15s",
           }}
@@ -971,7 +969,8 @@ export default function HomePage() {
           display: "flex", justifyContent: "center", paddingTop: "10vh"
         }} onClick={() => setShowSearchModal(false)}>
           <div style={{
-            width: "100%", maxWidth: 500, background: C.sidebar, border: `1px solid ${C.sidebarBorder}`,
+            width: "100%", maxWidth: 500, background: isDark ? "rgba(30,30,30,0.75)" : "rgba(255,255,255,0.75)", 
+            backdropFilter: "blur(24px) saturate(150%)", border: `1px solid ${C.sidebarBorder}`,
             borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: "60vh",
             boxShadow: "0 24px 60px rgba(0,0,0,0.2)"
           }} onClick={e => e.stopPropagation()}>
@@ -1308,6 +1307,15 @@ export default function HomePage() {
         }
         .mobile-backdrop.open {
           opacity: 1; pointer-events: auto;
+        }
+        .shimmer-line {
+          background: linear-gradient(90deg, var(--chipBg) 25%, var(--inputBg) 50%, var(--chipBg) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite linear;
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
         }
         ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-track { background: transparent; }
