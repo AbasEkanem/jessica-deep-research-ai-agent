@@ -109,6 +109,8 @@ const ACTION_ICONS: Record<string, { d?: string, isCheck?: boolean }> = {
 function ActionIcon({ type, active }: { type: string, active: boolean }) {
   const color = active ? C.accent : C.muted;
   if (type === "search") return <GlobeIcon size={13} color={color} />;
+  if (type === "memory") return <span style={{ fontSize: 13, flexShrink: 0 }}>🧠</span>;
+  if (type === "email") return <span style={{ fontSize: 13, flexShrink: 0 }}>✉️</span>;
   const ico = ACTION_ICONS[type] || ACTION_ICONS.think;
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -212,6 +214,8 @@ export default function AgentSearchCard({
   const isDone     = phase === "done";
   const activeIdx  = actions.findIndex(a => !a.done);
   const activeLabel = actions[activeIdx]?.label ?? "";
+  const isMemory   = actions.some(a => a.type === "memory");
+  const isEmail    = actions.some(a => a.type === "email");
 
   useEffect(() => {
     if (isDone) return;
@@ -265,7 +269,17 @@ export default function AgentSearchCard({
         }
 
         <span style={{ fontSize: 13.5, fontWeight: 500, color: C.text, flex: 1 }}>
-          {isDone ? `thoughts for (${formattedSeconds}s)` : `Thinking (${formattedSeconds}s)…`}
+          {isDone 
+            ? (isMemory 
+                ? `memory accessed in (${formattedSeconds}s)` 
+                : isEmail 
+                  ? `email task completed in (${formattedSeconds}s)` 
+                  : `thoughts for (${formattedSeconds}s)`)
+            : (isMemory 
+                ? `Accessing memory…` 
+                : isEmail 
+                  ? `Processing email…` 
+                  : `Thinking…`)}
         </span>
 
         {collapsed && activeLabel && (
@@ -315,15 +329,15 @@ export default function AgentSearchCard({
                   paddingTop: 10, paddingBottom: 6,
                   borderTop: `1px solid ${C.cardBorder}`,
                 }}>
-                  <GlobeIcon size={13} />
+                  {isMemory ? <span style={{ fontSize: 13 }}>🧠</span> : isEmail ? <span style={{ fontSize: 13 }}>✉️</span> : <GlobeIcon size={13} />}
                   <span style={{
                     flex: 1, fontSize: 12, color: C.muted,
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                   }}>
-                    {searchQuery}
+                    {isMemory ? "Memory Search" : isEmail ? "Email Operation" : searchQuery}
                   </span>
                   <span style={{ fontSize: 11.5, color: C.muted, flexShrink: 0 }}>
-                    {results.length} results
+                    {isMemory ? `${results.length} memories` : isEmail ? `${results.length} emails` : `${results.length} results`}
                   </span>
                 </div>
 
