@@ -16,6 +16,9 @@ import email
 import email.header
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.utils import make_msgid, formatdate
+from email import encoders
 from datetime import datetime, timezone, timedelta
 import smtplib
 
@@ -28,10 +31,12 @@ load_dotenv()
 
 #Credentials 
 RESEND_API_KEY     = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM        = os.getenv("RESEND_FROM_EMAIL", "Jessica 3.0 <[EMAIL_ADDRESS]>")
 
 GMAIL_ADDRESS      = os.getenv("GMAIL_ADDRESS", "")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
+
+_default_from = f"Jessica 3.0 <{GMAIL_ADDRESS}>" if GMAIL_ADDRESS else "Jessica 3.0 <[EMAIL_ADDRESS]>"
+RESEND_FROM        = os.getenv("RESEND_FROM_EMAIL", _default_from)
 
 SUPABASE_URL       = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY       = os.getenv("SUPABASE_KEY", "")
@@ -152,6 +157,7 @@ def send_research_email(
     to_email: str,
     subject: str,
     research_content: str,
+    attachment_paths: list[str] = None,
 ) -> str:
     """
     Send a comprehensive research report or analysis via email with professional HTML formatting.
@@ -169,6 +175,7 @@ def send_research_email(
         to_email: Recipient's email address (e.g. 'analyst@company.com')
         subject: Descriptive subject line summarising the research topic
         research_content: Full research findings, analysis, citations, and conclusions
+        attachment_paths: Optional list of absolute paths to files to attach to the email.
 
     Returns:
         Confirmation message with delivery method and status
@@ -179,17 +186,32 @@ def send_research_email(
     html_body = _build_html_email(subject, research_content)
     method = "unknown"
 
+    resend_attachments = []
+    if attachment_paths:
+        for path in attachment_paths:
+            if os.path.isfile(path):
+                filename = os.path.basename(path)
+                with open(path, "rb") as f:
+                    file_data = f.read()
+                resend_attachments.append({
+                    "filename": filename,
+                    "content": list(file_data)
+                })
+
     # ── 1. Try Resend ──
     if RESEND_API_KEY:
         try:
             resend.api_key = RESEND_API_KEY
-            resend.Emails.send({
+            payload = {
                 "from":    RESEND_FROM,
                 "to":      [to_email],
                 "subject": subject,
                 "text":    research_content,
                 "html":    html_body,
-            })
+            }
+            if resend_attachments:
+                payload["attachments"] = resend_attachments
+            resend.Emails.send(payload)
             method = "Resend"
             _log_email_to_supabase("sent", RESEND_FROM, to_email, subject, research_content)
             return (
@@ -211,12 +233,28 @@ def send_research_email(
         )
 
     try:
-        msg = MIMEMultipart("alternative")
+        msg = MIMEMultipart("mixed")
         msg["From"]    = f"Jessica 3.0 Research Agent <{GMAIL_ADDRESS}>"
         msg["To"]      = to_email
         msg["Subject"] = subject
-        msg.attach(MIMEText(research_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
+        msg["Date"]    = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain="jessica.ai")
+
+        body_part = MIMEMultipart("alternative")
+        body_part.attach(MIMEText(research_content, "plain", "utf-8"))
+        body_part.attach(MIMEText(html_body, "html", "utf-8"))
+        msg.attach(body_part)
+
+        if attachment_paths:
+            for path in attachment_paths:
+                if os.path.isfile(path):
+                    filename = os.path.basename(path)
+                    with open(path, "rb") as f:
+                        part = MIMEBase("application", "octet-stream")
+                        part.set_payload(f.read())
+                    encoders.encode_base64(part)
+                    part.add_header("Content-Disposition", f'attachment; filename="{filename}"')
+                    msg.attach(part)
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
