@@ -1,42 +1,42 @@
-# --- Stage 1: Build Frontend ---
-FROM node:20-slim AS ui-builder
-WORKDIR /app/ui
-COPY ui/package*.json ./
-RUN npm ci
-COPY ui/ ./
-# Force relative API URLs in production (no localhost)
-RUN rm -f .env.local .env
-ENV NEXT_PUBLIC_API_URL=""
-RUN npm run build
-
-# --- Stage 2: Final Backend Image ---
+# --- Monolithic Image ---
 FROM python:3.11-slim
-WORKDIR /app
 
-# Install system dependencies for psycopg and other tools
+# Install system dependencies, including curl for Node.js setup
 RUN apt-get update && apt-get install -y \
+    curl \
     libpq-dev \
     gcc \
-    curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js (v20)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
+
+WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir psycopg[binary]
 
-# Pre-download the embedding model during build (avoids runtime download delay)
+# Pre-download the embedding model
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')" || true
 
-# Copy application code
+# Copy all files
 COPY . .
 
-# Copy the built frontend from Stage 1 into the 'static' folder
-COPY --from=ui-builder /app/ui/out ./static
+# Make the start script executable
+RUN chmod +x start.sh
 
-# Ensure the static folder is recognized by FastAPI
-ENV PORT=8080
+# Build the Next.js frontend
+WORKDIR /app/ui
+RUN npm ci
+# We do not use output: standalone because next-auth needs the standard next start server
+RUN npm run build
+
+# Expose port (Cloud Run sets PORT, usually 8080)
 EXPOSE 8080
 
-# Run the unified app
-CMD ["python", "fastAPI.py"]
+WORKDIR /app
+CMD ["./start.sh"]
